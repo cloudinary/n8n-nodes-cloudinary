@@ -13,6 +13,8 @@ import { generateCloudinarySignature, createMultipartBody } from './cloudinary.u
 
 
 export class Cloudinary implements INodeType {
+	private static readonly CREDENTIAL_TYPE = 'cloudinaryApi';
+
 	description: INodeTypeDescription = {
 		displayName: 'Cloudinary',
 		name: 'cloudinary',
@@ -28,7 +30,7 @@ export class Cloudinary implements INodeType {
 		outputs: [NodeConnectionType.Main],
 		credentials: [
 			{
-				name: 'cloudinaryApi',
+				name: Cloudinary.CREDENTIAL_TYPE,
 				required: true,
 			},
 		],
@@ -477,7 +479,7 @@ export class Cloudinary implements INodeType {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
 
-		const credentials = await this.getCredentials('cloudinaryApi');
+		const credentials = await this.getCredentials(Cloudinary.CREDENTIAL_TYPE);
 		const cloudName = credentials.cloudName as string;
 		const apiKey = credentials.apiKey as string;
 		const apiSecret = credentials.apiSecret as string;
@@ -520,7 +522,11 @@ export class Cloudinary implements INodeType {
 					};
 
 					// Make the API request
-					const response = await this.helpers.httpRequest(options);
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						Cloudinary.CREDENTIAL_TYPE,
+						options,
+					);
 
 					returnData.push({
 						json: response,
@@ -587,7 +593,11 @@ export class Cloudinary implements INodeType {
 						},
 					};
 
-					const response = await this.helpers.httpRequest(options);
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						Cloudinary.CREDENTIAL_TYPE,
+						options,
+					);
 
 					returnData.push({
 						json: response,
@@ -628,7 +638,11 @@ export class Cloudinary implements INodeType {
 					};
 
 					// Make the API request
-					const response = await this.helpers.httpRequest(options);
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						Cloudinary.CREDENTIAL_TYPE,
+						options,
+					);
 
 					returnData.push({
 						json: response,
@@ -655,7 +669,11 @@ export class Cloudinary implements INodeType {
 					};
 
 					// Make the API request
-					const response = await this.helpers.httpRequest(options);
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						Cloudinary.CREDENTIAL_TYPE,
+						options,
+					);
 
 					returnData.push({
 						json: response,
@@ -695,7 +713,11 @@ export class Cloudinary implements INodeType {
 					};
 
 					// Make the API request
-					const response = await this.helpers.httpRequest(options);
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						Cloudinary.CREDENTIAL_TYPE,
+						options,
+					);
 
 					returnData.push({
 						json: response,
@@ -753,7 +775,11 @@ export class Cloudinary implements INodeType {
 					};
 
 					// Make the API request
-					const response = await this.helpers.httpRequest(options);
+					const response = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						Cloudinary.CREDENTIAL_TYPE,
+						options,
+					);
 
 					returnData.push({
 						json: response,
