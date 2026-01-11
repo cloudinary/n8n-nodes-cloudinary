@@ -212,27 +212,9 @@ export class Cloudinary implements INodeType {
 					{
 						displayName: 'Tags',
 						name: 'tags',
-						type: 'fixedCollection',
-						typeOptions: {
-							multipleValues: true,
-						},
-						default: {},
-						description: 'Tags to assign to the uploaded asset',
-						options: [
-							{
-								name: 'tagValues',
-								displayName: 'Tag',
-								values: [
-									{
-										displayName: 'Tag',
-										name: 'tag',
-										type: 'string',
-										default: '',
-										description: 'Tag name to assign to the asset',
-									},
-								],
-							},
-						],
+						type: 'string',
+						default: '',
+						description: 'A comma-separated list of tag names to assign to the asset',
 					},
 					{
 						displayName: 'Structured Metadata',
@@ -505,27 +487,9 @@ export class Cloudinary implements INodeType {
 					{
 						displayName: 'Tags',
 						name: 'tags',
-						type: 'fixedCollection',
-						typeOptions: {
-							multipleValues: true,
-						},
-						default: {},
-						description: 'Tags to assign to the uploaded asset',
-						options: [
-							{
-								name: 'tagValues',
-								displayName: 'Tag',
-								values: [
-									{
-										displayName: 'Tag',
-										name: 'tag',
-										type: 'string',
-										default: '',
-										description: 'Tag name to assign to the asset',
-									},
-								],
-							},
-						],
+						type: 'string',
+						default: '',
+						description: 'A comma-separated list of tag names to assign to the asset',
 					},
 					{
 						displayName: 'Structured Metadata',
@@ -557,18 +521,6 @@ export class Cloudinary implements INodeType {
 					const url = this.getNodeParameter('url', i) as string;
 					const resourceType = this.getNodeParameter('resource_type', i) as string;
 					const additionalFields = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
-
-					// Process tags if provided
-					if (additionalFields.tags) {
-						const tagsData = additionalFields.tags as IDataObject;
-						const tagValues = (tagsData.tagValues as IDataObject[]) || [];
-						const tagsArray = tagValues.map((item) => item.tag as string);
-						if (tagsArray.length > 0) {
-							additionalFields.tags = tagsArray.join(',');
-						} else {
-							delete additionalFields.tags;
-						}
-					}
 
 					// Process metadata if provided
 					if (additionalFields.metadata) {
@@ -639,18 +591,6 @@ export class Cloudinary implements INodeType {
 						i,
 						{},
 					) as IDataObject;
-
-					// Process tags if provided
-					if (additionalFields.tags) {
-						const tagsData = additionalFields.tags as IDataObject;
-						const tagValues = (tagsData.tagValues as IDataObject[]) || [];
-						const tagsArray = tagValues.map((item) => item.tag as string);
-						if (tagsArray.length > 0) {
-							additionalFields.tags = tagsArray.join(',');
-						} else {
-							delete additionalFields.tags;
-						}
-					}
 
 					// Process metadata if provided
 					if (additionalFields.metadata) {
