@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-cloudinary",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "The official Cloudinary n8n node - upload media, update asset tags and metadata, and more",
   "keywords": [
     "n8n-community-node-package",
