@@ -30,7 +30,9 @@
     "lint": "eslint nodes credentials package.json",
     "lintfix": "eslint nodes credentials package.json --fix",
     "prepublishOnly": "npm run build && npm run lint -c .eslintrc.prepublish.js nodes credentials package.json",
-    "n8n-validate": "npx @n8n/scan-community-package n8n-nodes-cloudinary"
+    "n8n-validate": "npx @n8n/scan-community-package n8n-nodes-cloudinary",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "files": [
     "dist"
@@ -52,7 +54,8 @@
     "gulp": "^5.0.0",
     "prettier": "^3.5.3",
     "semantic-release": "^24.2.0",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "^4.1.7"
   },
   "peerDependencies": {
     "n8n-workflow": "*"
