@@ -1,7 +1,6 @@
 import {
 	INodeType,
 	INodeTypeDescription,
-	NodeConnectionType,
 	IExecuteFunctions,
 	INodeExecutionData,
 	NodeOperationError,
@@ -15,7 +14,7 @@ export class Cloudinary implements INodeType {
 		displayName: 'Cloudinary',
 		name: 'cloudinary',
 		icon: 'file:cloudinary.svg',
-		group: ['Cloudinary'],
+		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		// Read by both humans (node tooltip in the editor) and LLMs (tool schema when this
@@ -28,8 +27,8 @@ export class Cloudinary implements INodeType {
 		defaults: {
 			name: 'Cloudinary',
 		},
-		inputs: [NodeConnectionType.Main],
-		outputs: [NodeConnectionType.Main],
+		inputs: ['main'],
+		outputs: ['main'],
 		credentials: [
 			{
 				name: CREDENTIAL_TYPE,
