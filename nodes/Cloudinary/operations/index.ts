@@ -5,6 +5,7 @@ import { deleteAssets } from './updateAsset/deleteAssets';
 import { getAsset } from './updateAsset/getAsset';
 import { updateTags } from './updateAsset/updateTags';
 import { updateMetadata } from './updateAsset/updateMetadata';
+import { updateDisplayName } from './updateAsset/updateDisplayName';
 import { search } from './admin/search';
 import { getTags } from './admin/getTags';
 import { getMetadataFields } from './admin/getMetadataFields';
@@ -20,6 +21,7 @@ export const operationHandlers: Record<string, OperationHandler> = {
 	'updateAsset:deleteAssets': deleteAssets,
 	'updateAsset:updateTags': updateTags,
 	'updateAsset:updateMetadata': updateMetadata,
+	'updateAsset:updateDisplayName': updateDisplayName,
 	'updateAsset:search': search,
 	'admin:getTags': getTags,
 	'admin:getMetadataFields': getMetadataFields,

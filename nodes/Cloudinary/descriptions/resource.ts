@@ -78,6 +78,12 @@ export const resourceProperties: INodeProperties[] = [
 				action: 'Search assets',
 			},
 			{
+				name: 'Update Asset Display Name',
+				value: 'updateDisplayName',
+				description: 'Update the display name of an asset by asset ID',
+				action: 'Update asset display name',
+			},
+			{
 				name: 'Update Asset Structured Metadata',
 				value: 'updateMetadata',
 				description: 'Update structured metadata for an existing asset',

@@ -11,7 +11,21 @@ export const updateAssetFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['updateAsset'],
-				operation: ['getAsset'],
+				operation: ['getAsset', 'updateDisplayName'],
+			},
+		},
+	},
+	{
+		displayName: 'Display Name',
+		name: 'displayName',
+		type: 'string',
+		default: '',
+		description: 'The new display name to set on the asset',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['updateAsset'],
+				operation: ['updateDisplayName'],
 			},
 		},
 	},
