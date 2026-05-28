@@ -16,6 +16,23 @@ export const updateAssetFields: INodeProperties[] = [
 		},
 	},
 	{
+		displayName: 'Public ID(s)',
+		name: 'publicIds',
+		type: 'string',
+		default: '',
+		description:
+			'Asset(s) to delete, by public ID. Paste a single public_id, several separated by commas, or wire up an expression — both single values and arrays from expressions are accepted.',
+		hint: 'A single public_id is fine — no commas needed. Expressions returning an array also work.',
+		placeholder: 'docs/strawberry  or  docs/strawberry, docs/owl',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['updateAsset'],
+				operation: ['deleteAssets'],
+			},
+		},
+	},
+	{
 		displayName: 'Public ID',
 		name: 'publicId',
 		type: 'string',
@@ -52,7 +69,7 @@ export const updateAssetFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['updateAsset'],
-				operation: ['updateTags', 'updateMetadata'],
+				operation: ['updateTags', 'updateMetadata', 'deleteAssets'],
 			},
 		},
 	},
@@ -84,7 +101,7 @@ export const updateAssetFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['updateAsset'],
-				operation: ['updateTags', 'updateMetadata'],
+				operation: ['updateTags', 'updateMetadata', 'deleteAssets'],
 			},
 		},
 	},
@@ -136,6 +153,51 @@ export const updateAssetFields: INodeProperties[] = [
 				type: 'boolean',
 				default: false,
 				description: 'Whether to invalidate CDN cache copies of the asset',
+			},
+		],
+	},
+	{
+		displayName: 'Delete Options',
+		name: 'deleteOptions',
+		type: 'collection',
+		placeholder: 'Add Option',
+		displayOptions: {
+			show: {
+				resource: ['updateAsset'],
+				operation: ['deleteAssets'],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Invalidate CDN',
+				name: 'invalidate',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to invalidate CDN cache copies of the deleted assets',
+			},
+			{
+				displayName: 'Keep Original',
+				name: 'keep_original',
+				type: 'boolean',
+				default: false,
+				description:
+					'Whether to keep the original asset and only delete its derived (transformed) versions',
+			},
+			{
+				displayName: 'Next Cursor',
+				name: 'next_cursor',
+				type: 'string',
+				default: '',
+				description: 'Pagination cursor returned by a previous delete response for large batches',
+			},
+			{
+				displayName: 'Transformations',
+				name: 'transformations',
+				type: 'string',
+				default: '',
+				description:
+					'Comma-separated list of transformation strings; only the listed derived assets are deleted',
 			},
 		],
 	},

@@ -1,6 +1,7 @@
 import { OperationHandler } from './types';
 import { uploadUrl } from './upload/uploadUrl';
 import { uploadFile } from './upload/uploadFile';
+import { deleteAssets } from './updateAsset/deleteAssets';
 import { getAsset } from './updateAsset/getAsset';
 import { updateTags } from './updateAsset/updateTags';
 import { updateMetadata } from './updateAsset/updateMetadata';
@@ -16,6 +17,7 @@ export const operationHandlers: Record<string, OperationHandler> = {
 	'upload:uploadUrl': uploadUrl,
 	'upload:uploadFile': uploadFile,
 	'updateAsset:getAsset': getAsset,
+	'updateAsset:deleteAssets': deleteAssets,
 	'updateAsset:updateTags': updateTags,
 	'updateAsset:updateMetadata': updateMetadata,
 	'updateAsset:search': search,

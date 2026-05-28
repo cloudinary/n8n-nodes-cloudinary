@@ -8,7 +8,9 @@ import {
 	metadataToPipeString,
 	buildUploadUrl,
 	buildResourceByAssetIdUrl,
+	buildResourceDeleteUrl,
 	buildResourceUpdateUrl,
+	splitCsvIds,
 } from './cloudinary.utils';
 
 describe('buildSearchExpression', () => {
@@ -318,5 +320,22 @@ describe('buildResourceByAssetIdUrl', () => {
 		expect(buildResourceByAssetIdUrl('demo', 'abc123')).toBe(
 			'https://api.cloudinary.com/v1_1/demo/resources/abc123',
 		);
+	});
+});
+
+describe('buildResourceDeleteUrl', () => {
+	it('builds the per-(resource_type, type) bulk-delete URL', () => {
+		expect(buildResourceDeleteUrl('demo', 'image', 'upload')).toBe(
+			'https://api.cloudinary.com/v1_1/demo/resources/image/upload',
+		);
+	});
+});
+
+describe('splitCsvIds', () => {
+	it('splits, trims, and drops empty entries', () => {
+		expect(splitCsvIds('a, b ,c')).toEqual(['a', 'b', 'c']);
+		expect(splitCsvIds(' , a, , b,')).toEqual(['a', 'b']);
+		expect(splitCsvIds('')).toEqual([]);
+		expect(splitCsvIds('solo')).toEqual(['solo']);
 	});
 });

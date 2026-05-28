@@ -42,6 +42,27 @@ export const buildResourceUpdateUrl = (
 export const buildResourceByAssetIdUrl = (cloudName: string, assetId: string): string =>
 	`${CLOUDINARY_API_BASE}/${cloudName}/resources/${assetId}`;
 
+/**
+ * Build the Admin API bulk-delete URL: `DELETE /resources/:resource_type/:type`.
+ * Cloudinary's delete endpoint is always per-(resource_type, type) — there is no
+ * asset_id-keyed delete shape, and the public_ids are passed in the query string.
+ */
+export const buildResourceDeleteUrl = (
+	cloudName: string,
+	resourceType: string,
+	type: string,
+): string => `${CLOUDINARY_API_BASE}/${cloudName}/resources/${resourceType}/${type}`;
+
+/**
+ * Split a comma-separated string of identifiers into a trimmed, empty-filtered
+ * array. Used by bulk endpoints that accept "id1, id2, id3" from the user.
+ */
+export const splitCsvIds = (csv: string): string[] =>
+	csv
+		.split(',')
+		.map((s) => s.trim())
+		.filter((s) => s.length > 0);
+
 // Cloudinary's structured-metadata format documents `=`, `"`, and `|` as the
 // characters that must be backslash-escaped when they appear inside a value
 // (https://cloudinary.com/documentation/image_upload_api_reference#metadata).

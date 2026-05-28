@@ -60,16 +60,22 @@ export const resourceProperties: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'Delete Assets',
+				value: 'deleteAssets',
+				description: 'Delete one or more assets by public ID',
+				action: 'Delete assets',
+			},
+			{
 				name: 'Get Asset',
 				value: 'getAsset',
-				description: 'Get details for a single asset by public ID',
+				description: 'Get details for a single asset by asset ID',
 				action: 'Get an asset',
 			},
 			{
-				name: 'Update Asset Tags',
-				value: 'updateTags',
-				description: 'Update tags for an existing asset',
-				action: 'Update asset tags',
+				name: 'Search Assets',
+				value: 'search',
+				description: 'Search for assets using a Cloudinary search expression',
+				action: 'Search assets',
 			},
 			{
 				name: 'Update Asset Structured Metadata',
@@ -78,10 +84,10 @@ export const resourceProperties: INodeProperties[] = [
 				action: 'Update asset structured metadata',
 			},
 			{
-				name: 'Search Assets',
-				value: 'search',
-				description: 'Search for assets using a Cloudinary search expression',
-				action: 'Search assets',
+				name: 'Update Asset Tags',
+				value: 'updateTags',
+				description: 'Update tags for an existing asset',
+				action: 'Update asset tags',
 			},
 		],
 		default: 'updateTags',
