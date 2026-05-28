@@ -6,7 +6,7 @@ export default defineConfig({
 			// n8n-workflow's "import" condition points at raw src/index.ts, which vitest
 			// can't load. Pin to the built CJS entry so runtime imports (e.g. ApplicationError)
 			// resolve during tests.
-			'n8n-workflow': 'n8n-workflow/dist/index.js',
+			'n8n-workflow': 'n8n-workflow/dist/cjs/index.js',
 		},
 	},
 });
