@@ -35,6 +35,13 @@ export const buildResourceUpdateUrl = (
 	publicId: string,
 ): string => `${CLOUDINARY_API_BASE}/${cloudName}/resources/${resourceType}/${type}/${publicId}`;
 
+/**
+ * Build the Admin API resource URL keyed by the immutable asset_id. Used by the
+ * asset_id-based endpoints (`GET`/`PUT /resources/:asset_id`).
+ */
+export const buildResourceByAssetIdUrl = (cloudName: string, assetId: string): string =>
+	`${CLOUDINARY_API_BASE}/${cloudName}/resources/${assetId}`;
+
 // Cloudinary's structured-metadata format documents `=`, `"`, and `|` as the
 // characters that must be backslash-escaped when they appear inside a value
 // (https://cloudinary.com/documentation/image_upload_api_reference#metadata).

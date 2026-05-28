@@ -7,6 +7,7 @@ import {
 	generateCloudinarySignature,
 	metadataToPipeString,
 	buildUploadUrl,
+	buildResourceByAssetIdUrl,
 	buildResourceUpdateUrl,
 } from './cloudinary.utils';
 
@@ -308,6 +309,14 @@ describe('buildResourceUpdateUrl', () => {
 	it('builds the Admin API resource-update URL', () => {
 		expect(buildResourceUpdateUrl('demo', 'image', 'upload', 'sample')).toBe(
 			'https://api.cloudinary.com/v1_1/demo/resources/image/upload/sample',
+		);
+	});
+});
+
+describe('buildResourceByAssetIdUrl', () => {
+	it('builds the Admin API asset_id-keyed resource URL', () => {
+		expect(buildResourceByAssetIdUrl('demo', 'abc123')).toBe(
+			'https://api.cloudinary.com/v1_1/demo/resources/abc123',
 		);
 	});
 });

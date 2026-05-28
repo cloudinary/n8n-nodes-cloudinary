@@ -2,6 +2,20 @@ import { INodeProperties } from 'n8n-workflow';
 
 export const updateAssetFields: INodeProperties[] = [
 	{
+		displayName: 'Asset ID',
+		name: 'assetId',
+		type: 'string',
+		default: '',
+		description: 'The immutable asset_id of the asset',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['updateAsset'],
+				operation: ['getAsset'],
+			},
+		},
+	},
+	{
 		displayName: 'Public ID',
 		name: 'publicId',
 		type: 'string',
@@ -122,6 +136,77 @@ export const updateAssetFields: INodeProperties[] = [
 				type: 'boolean',
 				default: false,
 				description: 'Whether to invalidate CDN cache copies of the asset',
+			},
+		],
+	},
+	{
+		displayName: 'Options',
+		name: 'getOptions',
+		type: 'collection',
+		placeholder: 'Add Option',
+		displayOptions: {
+			show: {
+				resource: ['updateAsset'],
+				operation: ['getAsset'],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Accessibility Analysis',
+				name: 'accessibility_analysis',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include accessibility analysis data in the response',
+			},
+			{
+				displayName: 'Colors',
+				name: 'colors',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include the predominant colors and color histogram of the asset',
+			},
+			{
+				displayName: 'Coordinates',
+				name: 'coordinates',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include custom and detected coordinates (e.g. faces, custom crop regions)',
+			},
+			{
+				displayName: 'Derived Next Cursor',
+				name: 'derived_next_cursor',
+				type: 'string',
+				default: '',
+				description: 'Pagination cursor for retrieving additional derived assets beyond the first page',
+			},
+			{
+				displayName: 'Faces',
+				name: 'faces',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include coordinates of detected faces',
+			},
+			{
+				displayName: 'Image Metadata',
+				name: 'image_metadata',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include IPTC, XMP, and EXIF metadata extracted from the asset',
+			},
+			{
+				displayName: 'Pages',
+				name: 'pages',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include the number of pages in multi-page assets (e.g. PDF, animated GIF, TIFF)',
+			},
+			{
+				displayName: 'Perceptual Hash (pHash)',
+				name: 'phash',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include the perceptual hash (pHash) of the uploaded asset',
 			},
 		],
 	},

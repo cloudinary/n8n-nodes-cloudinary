@@ -60,6 +60,12 @@ export const resourceProperties: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'Get Asset',
+				value: 'getAsset',
+				description: 'Get details for a single asset by public ID',
+				action: 'Get an asset',
+			},
+			{
 				name: 'Update Asset Tags',
 				value: 'updateTags',
 				description: 'Update tags for an existing asset',
