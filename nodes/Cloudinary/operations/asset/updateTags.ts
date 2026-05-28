@@ -1,5 +1,5 @@
 import { IDataObject, IHttpRequestOptions } from 'n8n-workflow';
-import { basicAuth, buildResourceUpdateUrl, jsonHeaders } from '../../cloudinary.utils';
+import { basicAuth, buildResourceByAssetIdUrl, jsonHeaders } from '../../cloudinary.utils';
 import { CREDENTIAL_TYPE, OperationHandler } from '../types';
 import { appendTags } from '../tagAppend';
 
@@ -9,9 +9,7 @@ export const updateTags: OperationHandler = async (ctx, i, creds) => {
 		return appendTags(ctx, i, creds);
 	}
 
-	const publicId = ctx.getNodeParameter('publicId', i) as string;
-	const resourceType = ctx.getNodeParameter('resourceType', i) as string;
-	const type = ctx.getNodeParameter('type', i) as string;
+	const assetId = ctx.getNodeParameter('assetId', i) as string;
 	const tags = ctx.getNodeParameter('tags', i) as string;
 	const updateOptions = ctx.getNodeParameter('updateOptions', i, {}) as IDataObject;
 
@@ -21,8 +19,8 @@ export const updateTags: OperationHandler = async (ctx, i, creds) => {
 	};
 
 	const options: IHttpRequestOptions = {
-		method: 'POST',
-		url: buildResourceUpdateUrl(creds.cloudName, resourceType, type, publicId),
+		method: 'PUT',
+		url: buildResourceByAssetIdUrl(creds.cloudName, assetId),
 		body,
 		headers: jsonHeaders(),
 		auth: basicAuth(creds),

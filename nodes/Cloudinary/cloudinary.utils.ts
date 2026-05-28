@@ -43,6 +43,14 @@ export const buildResourceByAssetIdUrl = (cloudName: string, assetId: string): s
 	`${CLOUDINARY_API_BASE}/${cloudName}/resources/${assetId}`;
 
 /**
+ * Build the Upload API tag-action URL: `POST /:resource_type/tags`. The mutation
+ * itself is selected by the `command` body field (add | remove | remove_all | replace).
+ * Signed auth (api_key + timestamp + signature) — not Basic.
+ */
+export const buildTagsActionUrl = (cloudName: string, resourceType: string): string =>
+	`${CLOUDINARY_API_BASE}/${cloudName}/${resourceType}/tags`;
+
+/**
  * Build the Admin API bulk-delete URL: `DELETE /resources/:resource_type/:type`.
  * Cloudinary's delete endpoint is always per-(resource_type, type) — there is no
  * asset_id-keyed delete shape, and the public_ids are passed in the query string.

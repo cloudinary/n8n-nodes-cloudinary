@@ -6,6 +6,8 @@ import { getAsset } from './updateAsset/getAsset';
 import { updateTags } from './updateAsset/updateTags';
 import { updateMetadata } from './updateAsset/updateMetadata';
 import { updateDisplayName } from './updateAsset/updateDisplayName';
+import { updateTags as assetUpdateTags } from './asset/updateTags';
+import { updateMetadata as assetUpdateMetadata } from './asset/updateMetadata';
 import { search } from './admin/search';
 import { getTags } from './admin/getTags';
 import { getMetadataFields } from './admin/getMetadataFields';
@@ -17,12 +19,14 @@ import { getMetadataFields } from './admin/getMetadataFields';
 export const operationHandlers: Record<string, OperationHandler> = {
 	'upload:uploadUrl': uploadUrl,
 	'upload:uploadFile': uploadFile,
-	'updateAsset:getAsset': getAsset,
-	'updateAsset:deleteAssets': deleteAssets,
 	'updateAsset:updateTags': updateTags,
 	'updateAsset:updateMetadata': updateMetadata,
-	'updateAsset:updateDisplayName': updateDisplayName,
-	'updateAsset:search': search,
+	'asset:getAsset': getAsset,
+	'asset:deleteAssets': deleteAssets,
+	'asset:updateTags': assetUpdateTags,
+	'asset:updateMetadata': assetUpdateMetadata,
+	'asset:updateDisplayName': updateDisplayName,
+	'asset:search': search,
 	'admin:getTags': getTags,
 	'admin:getMetadataFields': getMetadataFields,
 };

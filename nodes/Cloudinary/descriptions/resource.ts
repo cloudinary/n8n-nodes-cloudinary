@@ -13,11 +13,15 @@ export const resourceProperties: INodeProperties[] = [
 			},
 			{
 				name: 'Asset',
-				value: 'updateAsset',
+				value: 'asset',
 			},
 			{
 				name: 'Library',
 				value: 'admin',
+			},
+			{
+				name: 'Asset (Legacy)',
+				value: 'updateAsset',
 			},
 		],
 		default: 'upload',
@@ -34,16 +38,16 @@ export const resourceProperties: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Upload From URL',
-				value: 'uploadUrl',
-				description: 'Upload an asset from URL',
-				action: 'Upload an asset from URL',
-			},
-			{
 				name: 'Upload File',
 				value: 'uploadFile',
 				description: 'Upload an asset from file data',
 				action: 'Upload an asset from file data',
+			},
+			{
+				name: 'Upload From URL',
+				value: 'uploadUrl',
+				description: 'Upload an asset from URL',
+				action: 'Upload an asset from URL',
 			},
 		],
 		default: 'uploadUrl',
@@ -55,7 +59,7 @@ export const resourceProperties: INodeProperties[] = [
 		noDataExpression: true,
 		displayOptions: {
 			show: {
-				resource: ['updateAsset'],
+				resource: ['asset'],
 			},
 		},
 		options: [
@@ -86,13 +90,39 @@ export const resourceProperties: INodeProperties[] = [
 			{
 				name: 'Update Asset Structured Metadata',
 				value: 'updateMetadata',
-				description: 'Update structured metadata for an existing asset',
+				description: 'Update structured metadata for an asset by asset ID',
 				action: 'Update asset structured metadata',
 			},
 			{
 				name: 'Update Asset Tags',
 				value: 'updateTags',
-				description: 'Update tags for an existing asset',
+				description: 'Update tags for an asset by asset ID',
+				action: 'Update asset tags',
+			},
+		],
+		default: 'getAsset',
+	},
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['updateAsset'],
+			},
+		},
+		options: [
+			{
+				name: 'Update Asset Structured Metadata',
+				value: 'updateMetadata',
+				description: '(Legacy form, public_id only. For asset_id-based identification, use the new Asset resource.) Update structured metadata for an existing asset.',
+				action: 'Update asset structured metadata',
+			},
+			{
+				name: 'Update Asset Tags',
+				value: 'updateTags',
+				description: '(Legacy form, public_id only. For asset_id-based identification, use the new Asset resource.) Update tags for an existing asset.',
 				action: 'Update asset tags',
 			},
 		],
@@ -110,16 +140,16 @@ export const resourceProperties: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Get Tags',
-				value: 'getTags',
-				description: 'Get all tags for a specific resource type',
-				action: 'Get tags for a resource type',
-			},
-			{
 				name: 'Get Metadata Fields',
 				value: 'getMetadataFields',
 				description: 'Get all metadata fields definitions',
 				action: 'Get metadata fields definitions',
+			},
+			{
+				name: 'Get Tags',
+				value: 'getTags',
+				description: 'Get all tags for a specific resource type',
+				action: 'Get tags for a resource type',
 			},
 		],
 		default: 'getTags',
