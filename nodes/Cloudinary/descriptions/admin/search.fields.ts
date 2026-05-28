@@ -10,7 +10,7 @@ export const searchFields: INodeProperties[] = [
 			'Cloudinary search expression. Examples: <code>tags=cat AND uploaded_at>1d</code>, <code>folder:products/*</code>, <code>tags="back to school"</code> (quote values with spaces). Leave empty to match all assets. <a href="https://cloudinary.com/documentation/admin_api#expression_fields" target="_blank">Full expression syntax →</a>',
 		displayOptions: {
 			show: {
-				resource: ['admin'],
+				resource: ['updateAsset'],
 				operation: ['search'],
 			},
 		},
@@ -29,7 +29,7 @@ export const searchFields: INodeProperties[] = [
 			'Resource types to search. Cloudinary defaults to image-only — select Video and/or Raw to include them. Ignored if your Expression already contains <code>resource_type:</code>.',
 		displayOptions: {
 			show: {
-				resource: ['admin'],
+				resource: ['updateAsset'],
 				operation: ['search'],
 			},
 		},
@@ -42,7 +42,7 @@ export const searchFields: INodeProperties[] = [
 		description: 'Whether to return all matching assets by automatically paginating through results',
 		displayOptions: {
 			show: {
-				resource: ['admin'],
+				resource: ['updateAsset'],
 				operation: ['search'],
 			},
 		},
@@ -59,7 +59,7 @@ export const searchFields: INodeProperties[] = [
 		},
 		displayOptions: {
 			show: {
-				resource: ['admin'],
+				resource: ['updateAsset'],
 				operation: ['search'],
 				searchReturnAll: [false],
 			},
@@ -72,7 +72,7 @@ export const searchFields: INodeProperties[] = [
 		placeholder: 'Add Field',
 		displayOptions: {
 			show: {
-				resource: ['admin'],
+				resource: ['updateAsset'],
 				operation: ['search'],
 			},
 		},

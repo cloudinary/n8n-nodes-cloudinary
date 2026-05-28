@@ -16,7 +16,7 @@ export const operationHandlers: Record<string, OperationHandler> = {
 	'upload:uploadFile': uploadFile,
 	'updateAsset:updateTags': updateTags,
 	'updateAsset:updateMetadata': updateMetadata,
-	'admin:search': search,
+	'updateAsset:search': search,
 	'admin:getTags': getTags,
 	'admin:getMetadataFields': getMetadataFields,
 };
