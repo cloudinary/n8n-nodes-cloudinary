@@ -1,5 +1,5 @@
 {
-	"node": "n8n-nodes-base.cloudinary",
+	"node": "n8n-nodes-cloudinary.cloudinary",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": ["Media", "Data & Storage"],
