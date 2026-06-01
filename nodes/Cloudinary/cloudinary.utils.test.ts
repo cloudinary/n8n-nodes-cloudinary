@@ -10,6 +10,8 @@ import {
 	buildResourceByAssetIdUrl,
 	buildResourceDeleteUrl,
 	buildResourceUpdateUrl,
+	buildDeliveryUrl,
+	joinTransformation,
 	splitCsvIds,
 } from './cloudinary.utils';
 
@@ -328,6 +330,175 @@ describe('buildResourceDeleteUrl', () => {
 		expect(buildResourceDeleteUrl('demo', 'image', 'upload')).toBe(
 			'https://api.cloudinary.com/v1_1/demo/resources/image/upload',
 		);
+	});
+});
+
+describe('buildDeliveryUrl', () => {
+	describe('host resolution', () => {
+		it('uses the shared host with the cloud name in the path by default', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					transformation: 'f_auto/q_auto',
+					publicId: 'sample',
+				}),
+			).toBe('https://res.cloudinary.com/demo/image/upload/f_auto/q_auto/sample');
+		});
+
+		it('moves the cloud name into the subdomain for a private CDN', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					transformation: 'f_auto/q_auto',
+					publicId: 'sample',
+					privateCdn: true,
+				}),
+			).toBe('https://demo-res.cloudinary.com/image/upload/f_auto/q_auto/sample');
+		});
+
+		it('drops the cloud name entirely for a custom hostname (CNAME)', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					transformation: 'f_auto/q_auto',
+					publicId: 'sample',
+					secureDistribution: 'assets.example.com',
+				}),
+			).toBe('https://assets.example.com/image/upload/f_auto/q_auto/sample');
+		});
+
+		it('lets a custom hostname win over the private-CDN flag', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					publicId: 'sample',
+					privateCdn: true,
+					secureDistribution: 'assets.example.com',
+				}),
+			).toBe('https://assets.example.com/image/upload/sample');
+		});
+
+		it('strips a scheme and trailing slash from a pasted custom hostname', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					publicId: 'sample',
+					secureDistribution: 'https://assets.example.com/',
+				}),
+			).toBe('https://assets.example.com/image/upload/sample');
+		});
+	});
+
+	describe('path composition', () => {
+		it('omits the transformation segment when none is given', () => {
+			expect(
+				buildDeliveryUrl({ cloudName: 'demo', resourceType: 'image', type: 'upload', publicId: 'sample' }),
+			).toBe('https://res.cloudinary.com/demo/image/upload/sample');
+		});
+
+		it('omits an empty-string transformation', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'video',
+					type: 'upload',
+					transformation: '',
+					publicId: 'clip',
+				}),
+			).toBe('https://res.cloudinary.com/demo/video/upload/clip');
+		});
+
+		it('appends the format as an extension on the public id', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'video',
+					type: 'upload',
+					transformation: 'so_2',
+					publicId: 'clip',
+					format: 'jpg',
+				}),
+			).toBe('https://res.cloudinary.com/demo/video/upload/so_2/clip.jpg');
+		});
+
+		it('emits a v-prefixed version segment before the public id', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					publicId: 'sample',
+					version: 1234567890,
+				}),
+			).toBe('https://res.cloudinary.com/demo/image/upload/v1234567890/sample');
+		});
+
+		it('omits the version segment for an empty-string version', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					publicId: 'sample',
+					version: '',
+				}),
+			).toBe('https://res.cloudinary.com/demo/image/upload/sample');
+		});
+
+		it('preserves a folder-nested public id verbatim', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					transformation: 'f_auto/q_auto',
+					publicId: 'folder/sub/sample',
+					format: 'webp',
+				}),
+			).toBe('https://res.cloudinary.com/demo/image/upload/f_auto/q_auto/folder/sub/sample.webp');
+		});
+
+		it('supports a non-upload delivery type', () => {
+			expect(
+				buildDeliveryUrl({ cloudName: 'demo', resourceType: 'image', type: 'fetch', publicId: 'sample' }),
+			).toBe('https://res.cloudinary.com/demo/image/fetch/sample');
+		});
+	});
+});
+
+describe('joinTransformation', () => {
+	it('joins components with slashes', () => {
+		expect(joinTransformation(['c_fill,g_auto,w_400', 'f_auto', 'q_auto'])).toBe(
+			'c_fill,g_auto,w_400/f_auto/q_auto',
+		);
+	});
+
+	it('drops undefined, null, empty, and whitespace-only components', () => {
+		expect(joinTransformation(['c_fill,w_400', undefined, '', null, '   ', 'q_auto'])).toBe(
+			'c_fill,w_400/q_auto',
+		);
+	});
+
+	it('trims surrounding whitespace from each component', () => {
+		expect(joinTransformation([' c_fill,w_400 ', ' q_auto '])).toBe('c_fill,w_400/q_auto');
+	});
+
+	it('returns an empty string when every component is empty', () => {
+		expect(joinTransformation([undefined, '', null, '  '])).toBe('');
+	});
+
+	it('returns an empty string for an empty array', () => {
+		expect(joinTransformation([])).toBe('');
 	});
 });
 

@@ -30,6 +30,23 @@ export class CloudinaryApi implements ICredentialType {
 			default: '',
 			typeOptions: { password: true },
 		},
+		{
+			displayName: 'Private CDN',
+			name: 'privateCdn',
+			type: 'boolean',
+			default: false,
+			description:
+				'Whether your account delivers from a private CDN distribution (<cloud>-res.cloudinary.com). Only affects the delivery URLs built by Transform operations.',
+		},
+		{
+			displayName: 'Custom Delivery Hostname',
+			name: 'secureDistribution',
+			type: 'string',
+			default: '',
+			placeholder: 'assets.example.com',
+			description:
+				'Custom delivery hostname (CNAME) for your account, if configured. Overrides the default host when building Transform delivery URLs. Leave empty to use res.cloudinary.com.',
+		},
 	];
 
 	// This tells how this credential is authenticated

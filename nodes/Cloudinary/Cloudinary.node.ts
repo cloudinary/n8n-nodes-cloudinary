@@ -47,6 +47,8 @@ export class Cloudinary implements INodeType {
 			cloudName: credentials.cloudName as string,
 			apiKey: credentials.apiKey as string,
 			apiSecret: credentials.apiSecret as string,
+			privateCdn: (credentials.privateCdn as boolean) ?? false,
+			secureDistribution: (credentials.secureDistribution as string) ?? '',
 		};
 
 		for (let i = 0; i < items.length; i++) {

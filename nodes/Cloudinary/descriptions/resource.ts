@@ -8,20 +8,24 @@ export const resourceProperties: INodeProperties[] = [
 		noDataExpression: true,
 		options: [
 			{
-				name: 'Upload',
-				value: 'upload',
-			},
-			{
 				name: 'Asset',
 				value: 'asset',
+			},
+			{
+				name: 'Asset (Legacy)',
+				value: 'updateAsset',
 			},
 			{
 				name: 'Library',
 				value: 'admin',
 			},
 			{
-				name: 'Asset (Legacy)',
-				value: 'updateAsset',
+				name: 'Transform',
+				value: 'transform',
+			},
+			{
+				name: 'Upload',
+				value: 'upload',
 			},
 		],
 		default: 'upload',
@@ -51,6 +55,74 @@ export const resourceProperties: INodeProperties[] = [
 			},
 		],
 		default: 'uploadUrl',
+	},
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['transform'],
+			},
+		},
+		options: [
+			{
+				name: 'Convert Image Format',
+				value: 'convertImage',
+				description: 'Build a delivery URL that converts an image to another format',
+				action: 'Convert an image format',
+			},
+			{
+				name: 'Crop Image',
+				value: 'cropImage',
+				description: 'Build a delivery URL that crops an image to fixed dimensions or an aspect ratio',
+				action: 'Crop an image',
+			},
+			{
+				name: 'Custom Transformation',
+				value: 'customTransformation',
+				description: 'Build a delivery URL from a raw Cloudinary transformation string',
+				action: 'Apply a custom transformation',
+			},
+			{
+				name: 'Multi-Step Transformation',
+				value: 'multiStep',
+				description: 'Build a delivery URL that chains several transformation steps in order',
+				action: 'Apply a multi step transformation',
+			},
+			{
+				name: 'Optimize Image',
+				value: 'optimizeImage',
+				description: 'Build a delivery URL that auto-optimizes an image (format + quality)',
+				action: 'Optimize an image',
+			},
+			{
+				name: 'Optimize Video',
+				value: 'optimizeVideo',
+				description: 'Build a delivery URL that auto-optimizes a video (format/codec + quality)',
+				action: 'Optimize a video',
+			},
+			{
+				name: 'Resize Image',
+				value: 'resizeImage',
+				description: 'Build a delivery URL that resizes an image to a width and/or height',
+				action: 'Resize an image',
+			},
+			{
+				name: 'Trim Video',
+				value: 'trimVideo',
+				description: 'Build a delivery URL that trims a video to a start, end, and/or duration',
+				action: 'Trim a video',
+			},
+			{
+				name: 'Video Thumbnail',
+				value: 'videoThumbnail',
+				description: 'Build a delivery URL for a still image frame from a video',
+				action: 'Generate a video thumbnail',
+			},
+		],
+		default: 'optimizeImage',
 	},
 	{
 		displayName: 'Operation',

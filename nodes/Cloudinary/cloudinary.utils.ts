@@ -42,6 +42,95 @@ export const buildResourceUpdateUrl = (
 export const buildResourceByAssetIdUrl = (cloudName: string, assetId: string): string =>
 	`${CLOUDINARY_API_BASE}/${cloudName}/resources/${assetId}`;
 
+/** The default shared delivery host. Accounts on a private CDN or a custom
+ * hostname (CNAME) deliver from elsewhere — see `buildDeliveryUrl`. */
+const SHARED_DELIVERY_HOST = 'res.cloudinary.com';
+
+export interface DeliveryUrlOptions {
+	cloudName: string;
+	/** image | video | raw */
+	resourceType: string;
+	/** upload | private | authenticated | fetch | ... */
+	type: string;
+	publicId: string;
+	/** Already-joined transformation string (see `joinTransformation`). May be empty. */
+	transformation?: string;
+	/** Target extension without the leading dot (e.g. `jpg`). */
+	format?: string;
+	/** Asset version; emitted as a `v<version>` path segment when present. */
+	version?: string | number;
+	/** Account is on a private CDN: host becomes `<cloud>-res.cloudinary.com`. */
+	privateCdn?: boolean;
+	/** Custom delivery hostname (CNAME / secure_distribution). Overrides the host. */
+	secureDistribution?: string;
+}
+
+/**
+ * Normalize a user-supplied custom delivery hostname (CNAME / secure_distribution):
+ * strip any scheme and trailing slashes so we always control the `https://` prefix.
+ */
+const normalizeDeliveryHost = (host: string): string =>
+	host
+		.trim()
+		.replace(/^https?:\/\//i, '')
+		.replace(/\/+$/, '');
+
+/**
+ * Build a Cloudinary delivery URL — the "third flow" that makes no API call. The
+ * host and cloud-name placement vary by account (see CLAUDE.md / Cloudinary's
+ * `advanced_url_delivery_options`):
+ *   - default (shared):  `https://res.cloudinary.com/<cloud>/<rt>/<type>/...`  (cloud in path)
+ *   - private CDN:        `https://<cloud>-res.cloudinary.com/<rt>/<type>/...`  (cloud in subdomain)
+ *   - custom hostname:    `https://<host>/<rt>/<type>/...`                      (cloud absent)
+ * The cloud name is emitted in the path only on the shared host; a private CDN or
+ * CNAME drops it. Mirrors how the official SDKs resolve `private_cdn` /
+ * `secure_distribution` from explicit config rather than detection.
+ */
+export const buildDeliveryUrl = (opts: DeliveryUrlOptions): string => {
+	const {
+		cloudName,
+		resourceType,
+		type,
+		publicId,
+		transformation,
+		format,
+		version,
+		privateCdn,
+		secureDistribution,
+	} = opts;
+
+	const cname = secureDistribution ? normalizeDeliveryHost(secureDistribution) : '';
+	const host = cname || (privateCdn ? `${cloudName}-${SHARED_DELIVERY_HOST}` : SHARED_DELIVERY_HOST);
+	const includeCloudName = !privateCdn && !cname;
+
+	const idWithFormat = format ? `${publicId}.${format}` : publicId;
+	const versionSegment =
+		version !== undefined && version !== '' ? `v${version}` : undefined;
+
+	const segments = [
+		includeCloudName ? cloudName : undefined,
+		resourceType,
+		type,
+		transformation,
+		versionSegment,
+		idWithFormat,
+	].filter((s): s is string => s !== undefined && s !== '');
+
+	return `https://${host}/${segments.join('/')}`;
+};
+
+/**
+ * Join transformation components into the slash-separated chain Cloudinary expects.
+ * Commas separate qualifiers *within* a component (the caller's responsibility);
+ * this joins components with `/` and drops empty/whitespace-only entries so callers
+ * can pass conditional pieces (e.g. an optional optimize tail) without guarding.
+ */
+export const joinTransformation = (components: Array<string | undefined | null>): string =>
+	components
+		.map((c) => (c == null ? '' : c.trim()))
+		.filter((c) => c.length > 0)
+		.join('/');
+
 /**
  * Build the Upload API tag-action URL: `POST /:resource_type/tags`. The mutation
  * itself is selected by the `command` body field (add | remove | remove_all | replace).

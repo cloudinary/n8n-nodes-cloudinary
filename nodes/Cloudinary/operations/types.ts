@@ -6,6 +6,10 @@ export interface CloudinaryCredentials {
 	cloudName: string;
 	apiKey: string;
 	apiSecret: string;
+	/** Account delivers from a private CDN (<cloud>-res.cloudinary.com). Optional. */
+	privateCdn?: boolean;
+	/** Custom delivery hostname (CNAME). Optional. Overrides the default host. */
+	secureDistribution?: string;
 }
 
 /**

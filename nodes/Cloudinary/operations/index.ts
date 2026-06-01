@@ -11,6 +11,15 @@ import { updateMetadata as assetUpdateMetadata } from './asset/updateMetadata';
 import { search } from './admin/search';
 import { getTags } from './admin/getTags';
 import { getMetadataFields } from './admin/getMetadataFields';
+import { optimizeImage } from './transform/optimizeImage';
+import { resizeImage } from './transform/resizeImage';
+import { cropImage } from './transform/cropImage';
+import { convertImage } from './transform/convertImage';
+import { optimizeVideo } from './transform/optimizeVideo';
+import { trimVideo } from './transform/trimVideo';
+import { videoThumbnail } from './transform/videoThumbnail';
+import { customTransformation } from './transform/customTransformation';
+import { multiStep } from './transform/multiStep';
 
 /**
  * Maps `${resource}:${operation}` to its handler. Add a new operation by
@@ -29,4 +38,13 @@ export const operationHandlers: Record<string, OperationHandler> = {
 	'asset:search': search,
 	'admin:getTags': getTags,
 	'admin:getMetadataFields': getMetadataFields,
+	'transform:optimizeImage': optimizeImage,
+	'transform:resizeImage': resizeImage,
+	'transform:cropImage': cropImage,
+	'transform:convertImage': convertImage,
+	'transform:optimizeVideo': optimizeVideo,
+	'transform:trimVideo': trimVideo,
+	'transform:videoThumbnail': videoThumbnail,
+	'transform:customTransformation': customTransformation,
+	'transform:multiStep': multiStep,
 };

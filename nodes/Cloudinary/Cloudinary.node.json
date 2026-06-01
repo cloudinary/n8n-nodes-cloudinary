@@ -2,8 +2,8 @@
 	"node": "n8n-nodes-cloudinary.cloudinary",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
-	"categories": ["Media", "Data & Storage"],
-	"alias": ["video", "image", "media", "transform", "transcode", "optimize", "upload", "CDN", "asset", "DAM"],
+	"categories": ["Data & Storage", "Marketing & Content"],
+	"alias": ["video", "image", "media", "transform", "transcode", "optimize", "resize", "crop", "thumbnail", "upload", "CDN", "asset", "DAM"],
 	"resources": {
 		"credentialDocumentation": [
 			{
