@@ -74,14 +74,16 @@ function stepComponents(step: IDataObject, resourceType: string): string[] {
 			return trimComponents({ start: str(step.start), end: str(step.end), duration: str(step.duration) });
 		case 'resize':
 			return resizeComponents({ width: num(step.width), height: num(step.height), fit: str(step.fit) || 'limit' });
-		case 'crop':
+		case 'crop': {
+			const cropBy = str(step.cropMode) || 'dimensions';
 			return cropComponents({
-				cropBy: str(step.cropMode) || 'dimensions',
-				width: num(step.width),
-				height: num(step.height),
+				cropBy,
+				width: cropBy === 'aspectRatio' ? num(step.cropAspectWidth) : num(step.cropWidth),
+				height: num(step.cropHeight),
 				aspectRatio: str(step.aspectRatio),
 				focus: str(step.focus) || 'auto',
 			});
+		}
 		case 'optimize':
 			return optimizeComponents({ quality: str(step.quality) || 'auto', resourceType });
 		case 'convert':

@@ -1,11 +1,12 @@
 import { IDataObject, ApplicationError } from 'n8n-workflow';
 import { sha256 } from './sha256.utils';
 import { CloudinaryCredentials } from './operations/types';
+import { version } from '../../package.json';
 
 const CLOUDINARY_API_BASE = 'https://api.cloudinary.com/v1_1';
 
 /** User-Agent sent on every Cloudinary request. */
-export const USER_AGENT = 'n8n/1.0';
+export const USER_AGENT = `n8n-nodes-cloudinary/${version}`;
 
 /** Standard JSON headers (Content-Type + User-Agent) shared across handlers. */
 export const jsonHeaders = (): Record<string, string> => ({

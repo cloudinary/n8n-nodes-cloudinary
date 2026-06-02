@@ -20,6 +20,7 @@ import { trimVideo } from './transform/trimVideo';
 import { videoThumbnail } from './transform/videoThumbnail';
 import { customTransformation } from './transform/customTransformation';
 import { multiStep } from './transform/multiStep';
+import { videoPlayer } from './transform/videoPlayer';
 
 /**
  * Maps `${resource}:${operation}` to its handler. Add a new operation by
@@ -47,4 +48,5 @@ export const operationHandlers: Record<string, OperationHandler> = {
 	'transform:videoThumbnail': videoThumbnail,
 	'transform:customTransformation': customTransformation,
 	'transform:multiStep': multiStep,
+	'transform:videoPlayer': videoPlayer,
 };

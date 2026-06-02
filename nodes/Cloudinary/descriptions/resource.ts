@@ -116,6 +116,12 @@ export const resourceProperties: INodeProperties[] = [
 				action: 'Trim a video',
 			},
 			{
+				name: 'Video Player',
+				value: 'videoPlayer',
+				description: 'Generate embed code and config for the Cloudinary Video Player',
+				action: 'Generate a video player embed',
+			},
+			{
 				name: 'Video Thumbnail',
 				value: 'videoThumbnail',
 				description: 'Build a delivery URL for a still image frame from a video',
