@@ -1,12 +1,22 @@
 import { IDataObject, ApplicationError } from 'n8n-workflow';
+import { Cloudinary } from '@cloudinary/url-gen';
 import { sha256 } from './sha256.utils';
 import { CloudinaryCredentials } from './operations/types';
-import { version } from '../../package.json';
+import { version as pkgVersion } from '../../package.json';
+
+// sdkCode 'I' = n8n (Appendix C integrations, registered 2026-06-02).
+// product 'B'  = Integrations (vs 'A' = Classic SDK).
+const N8N_ANALYTICS = {
+	sdkCode: 'I' as const,
+	product: 'B' as const,
+	sdkSemver: pkgVersion,
+	techVersion: process.versions.node,
+};
 
 const CLOUDINARY_API_BASE = 'https://api.cloudinary.com/v1_1';
 
 /** User-Agent sent on every Cloudinary request. */
-export const USER_AGENT = `n8n-nodes-cloudinary/${version}`;
+export const USER_AGENT = `n8n-nodes-cloudinary/${pkgVersion}`;
 
 /** Standard JSON headers (Content-Type + User-Agent) shared across handlers. */
 export const jsonHeaders = (): Record<string, string> => ({
@@ -43,10 +53,6 @@ export const buildResourceUpdateUrl = (
 export const buildResourceByAssetIdUrl = (cloudName: string, assetId: string): string =>
 	`${CLOUDINARY_API_BASE}/${cloudName}/resources/${assetId}`;
 
-/** The default shared delivery host. Accounts on a private CDN or a custom
- * hostname (CNAME) deliver from elsewhere — see `buildDeliveryUrl`. */
-const SHARED_DELIVERY_HOST = 'res.cloudinary.com';
-
 export interface DeliveryUrlOptions {
 	cloudName: string;
 	/** image | video | raw */
@@ -76,29 +82,45 @@ const normalizeDeliveryHost = (host: string): string =>
 		.replace(/^https?:\/\//i, '')
 		.replace(/\/+$/, '');
 
-/**
- * Percent-encode a `fetch` remote source URL for use as a delivery path segment,
- * mirroring the Cloudinary SDKs' "smart escape": path-safe characters
- * (`A-Za-z0-9_.-/:`) stay readable while everything else — notably `?`, `#`, `&`,
- * `=`, and spaces — is percent-encoded (as UTF-8, via `encodeURIComponent` on each
- * unsafe run). Without this, a source like `https://host/a.jpg?sig=x#v1` would be
- * split by the browser at `?`/`#`, so Cloudinary would receive only the truncated
- * path and never the full remote URL. Applied to `fetch` only — the social-source
- * types take opaque IDs, not URLs, so their identifiers pass through untouched.
- */
-const smartEscapeFetchUrl = (source: string): string =>
-	source.replace(/[^A-Za-z0-9_.\-/:]+/g, (run) => encodeURIComponent(run));
+// Cloudinary instances are stateless config containers — cache them by delivery
+// config so we don't re-allocate on every URL build.
+const _cldInstances = new Map<string, Cloudinary>();
+
+function getCloudinaryInstance(cloudName: string, privateCdn: boolean, cname: string): Cloudinary {
+	const key = `${cloudName}|${privateCdn}|${cname}`;
+	if (!_cldInstances.has(key)) {
+		_cldInstances.set(key, new Cloudinary({
+			cloud: { cloudName },
+			url: {
+				secure: true,
+				// Disable the SDK default of prepending v1 to foldered public IDs;
+				// callers pass explicit versions when needed.
+				forceVersion: false,
+				...(privateCdn && { privateCdn: true }),
+				...(cname && { secureDistribution: cname }),
+			},
+		}));
+	}
+	return _cldInstances.get(key)!;
+}
 
 /**
- * Build a Cloudinary delivery URL — the "third flow" that makes no API call. The
- * host and cloud-name placement vary by account (see CLAUDE.md / Cloudinary's
- * `advanced_url_delivery_options`):
- *   - default (shared):  `https://res.cloudinary.com/<cloud>/<rt>/<type>/...`  (cloud in path)
- *   - private CDN:        `https://<cloud>-res.cloudinary.com/<rt>/<type>/...`  (cloud in subdomain)
- *   - custom hostname:    `https://<host>/<rt>/<type>/...`                      (cloud absent)
- * The cloud name is emitted in the path only on the shared host; a private CDN or
- * CNAME drops it. Mirrors how the official SDKs resolve `private_cdn` /
- * `secure_distribution` from explicit config rather than detection.
+ * The SDK encodes `?` and `=` in fetch source URLs but leaves `&` and `#` bare.
+ * `&` would split the URL into query params at the CDN level; `#` would be stripped
+ * as a fragment by browsers and HTTP clients before the request reaches Cloudinary.
+ * Post-process the path portion of the SDK's output to encode them.
+ */
+const fixFetchUrl = (sdkUrl: string): string => {
+	const qi = sdkUrl.indexOf('?_a=');
+	const path = qi >= 0 ? sdkUrl.slice(0, qi) : sdkUrl;
+	const query = qi >= 0 ? sdkUrl.slice(qi) : '';
+	return path.replace(/[&#]/g, (c) => encodeURIComponent(c)) + query;
+};
+
+/**
+ * Build a Cloudinary delivery URL via @cloudinary/url-gen — the "third flow"
+ * that makes no API call. Handles shared / private-CDN / CNAME host routing and
+ * appends the n8n analytics slug automatically (sdkCode I, product B).
  */
 export const buildDeliveryUrl = (opts: DeliveryUrlOptions): string => {
 	const {
@@ -109,31 +131,29 @@ export const buildDeliveryUrl = (opts: DeliveryUrlOptions): string => {
 		transformation,
 		format,
 		version,
-		privateCdn,
+		privateCdn = false,
 		secureDistribution,
 	} = opts;
 
 	const cname = secureDistribution ? normalizeDeliveryHost(secureDistribution) : '';
-	const host = cname || (privateCdn ? `${cloudName}-${SHARED_DELIVERY_HOST}` : SHARED_DELIVERY_HOST);
-	const includeCloudName = !privateCdn && !cname;
+	const cld = getCloudinaryInstance(cloudName, privateCdn, cname);
 
-	// A `fetch` public_id is a full remote URL; escape it so query/fragment chars
-	// don't break the Cloudinary request path. Stored/social ids pass through.
-	const id = type === 'fetch' ? smartEscapeFetchUrl(publicId) : publicId;
-	const idWithFormat = format ? `${id}.${format}` : id;
-	const versionSegment =
-		version !== undefined && version !== '' ? `v${version}` : undefined;
+	const idWithFormat = format ? `${publicId}.${format}` : publicId;
 
-	const segments = [
-		includeCloudName ? cloudName : undefined,
-		resourceType,
-		type,
-		transformation,
-		versionSegment,
-		idWithFormat,
-	].filter((s): s is string => s !== undefined && s !== '');
+	const asset = resourceType === 'video' ? cld.video(idWithFormat) : cld.image(idWithFormat);
 
-	return `https://${host}/${segments.join('/')}`;
+	if (type && type !== 'upload') {
+		asset.setDeliveryType(type);
+	}
+	if (transformation) {
+		asset.addTransformation(transformation);
+	}
+	if (version !== undefined && version !== '') {
+		asset.setVersion(version);
+	}
+
+	const url = asset.toURL({ trackedAnalytics: N8N_ANALYTICS });
+	return type === 'fetch' ? fixFetchUrl(url) : url;
 };
 
 /**
