@@ -71,7 +71,7 @@ export const transformFields: INodeProperties[] = [
 			{ name: 'YouTube', value: 'youtube' },
 		],
 		default: 'upload',
-		description: 'Cloudinary delivery type, which becomes the URL path segment (e.g. image/upload/sample, image/facebook/&lt;ID&gt;, video/fetch/&lt;URL&gt;). Note: private and authenticated assets — and, depending on your account settings, social profile sources (Facebook, Twitter, Gravatar) — require a signed URL, which is not supported yet.',
+		description: 'Cloudinary delivery type — in almost all cases use "Upload" (public assets). Becomes the URL path segment (e.g. image/upload/sample, video/fetch/&lt;URL&gt;). IMPORTANT: "Private" and "Authenticated" assets — and, depending on account settings, social profile sources (Facebook, Twitter, Gravatar) — require a signed URL, which this node does not generate yet, so those delivery URLs will fail to load. Leave as "Upload" unless you specifically need another type.',
 		displayOptions: {
 			show: {
 				resource: ['transform'],
@@ -126,7 +126,7 @@ export const transformFields: INodeProperties[] = [
 			{ name: 'Scale (Exact)', value: 'scale', description: 'Force exact dimensions; may distort if both are set' },
 		],
 		default: 'limit',
-		description: 'How the image is fitted to the requested dimensions',
+		description: 'How the image is fitted to the requested dimensions. Note: Resize does not auto-optimize — chain Optimize Image after it, or use Multi-Step, to add f_auto/q_auto.',
 		displayOptions: {
 			show: { resource: ['transform'], operation: ['resizeImage'] },
 		},
@@ -200,7 +200,7 @@ export const transformFields: INodeProperties[] = [
 			{ name: 'Center', value: 'center', description: 'Center the crop on the middle of the image' },
 		],
 		default: 'auto',
-		description: 'Which part of the image to keep in focus when cropping',
+		description: 'Which part of the image to keep in focus when cropping. Note: Crop does not auto-optimize — chain Optimize Image after it, or use Multi-Step, to add f_auto/q_auto.',
 		displayOptions: {
 			show: { resource: ['transform'], operation: ['cropImage'] },
 		},
