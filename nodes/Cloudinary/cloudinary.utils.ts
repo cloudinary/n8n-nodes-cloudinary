@@ -77,6 +77,19 @@ const normalizeDeliveryHost = (host: string): string =>
 		.replace(/\/+$/, '');
 
 /**
+ * Percent-encode a `fetch` remote source URL for use as a delivery path segment,
+ * mirroring the Cloudinary SDKs' "smart escape": path-safe characters
+ * (`A-Za-z0-9_.-/:`) stay readable while everything else — notably `?`, `#`, `&`,
+ * `=`, and spaces — is percent-encoded (as UTF-8, via `encodeURIComponent` on each
+ * unsafe run). Without this, a source like `https://host/a.jpg?sig=x#v1` would be
+ * split by the browser at `?`/`#`, so Cloudinary would receive only the truncated
+ * path and never the full remote URL. Applied to `fetch` only — the social-source
+ * types take opaque IDs, not URLs, so their identifiers pass through untouched.
+ */
+const smartEscapeFetchUrl = (source: string): string =>
+	source.replace(/[^A-Za-z0-9_.\-/:]+/g, (run) => encodeURIComponent(run));
+
+/**
  * Build a Cloudinary delivery URL — the "third flow" that makes no API call. The
  * host and cloud-name placement vary by account (see CLAUDE.md / Cloudinary's
  * `advanced_url_delivery_options`):
@@ -104,7 +117,10 @@ export const buildDeliveryUrl = (opts: DeliveryUrlOptions): string => {
 	const host = cname || (privateCdn ? `${cloudName}-${SHARED_DELIVERY_HOST}` : SHARED_DELIVERY_HOST);
 	const includeCloudName = !privateCdn && !cname;
 
-	const idWithFormat = format ? `${publicId}.${format}` : publicId;
+	// A `fetch` public_id is a full remote URL; escape it so query/fragment chars
+	// don't break the Cloudinary request path. Stored/social ids pass through.
+	const id = type === 'fetch' ? smartEscapeFetchUrl(publicId) : publicId;
+	const idWithFormat = format ? `${id}.${format}` : id;
 	const versionSegment =
 		version !== undefined && version !== '' ? `v${version}` : undefined;
 

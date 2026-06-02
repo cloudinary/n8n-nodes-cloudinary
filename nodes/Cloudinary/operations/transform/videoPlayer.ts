@@ -98,8 +98,8 @@ function buildEmbedUrl(cloudName: string, p: PlayerParams): string {
 		q.push(`player[floatingWhenNotVisible]=${enc(String(adv.floatingWhenNotVisible))}`);
 	}
 
-	// source[transformation] intentionally omitted: it applies to the poster image only,
-	// not the video stream (empirically confirmed — see plan).
+	// source[transformation] intentionally omitted: in the embed URL it applies to the
+	// poster image only, not the video stream, so it would be misleading here.
 
 	return `https://player.cloudinary.com/embed/?${q.join('&')}`;
 }

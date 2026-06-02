@@ -325,6 +325,63 @@ describe('transform public_id with embedded extension (special case)', () => {
 		expect(out.format).toBeUndefined();
 		expect(out.secure_url).toBe(`${HOST}/image/upload/f_auto/q_auto/samples/cat`);
 	});
+
+	it('recovers the extension for private/authenticated stored assets', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'secret.png', type: 'authenticated' },
+		});
+		const [out] = await optimizeImage(ctx, 0, testCreds);
+		expect(out.format).toBe('png');
+		expect(out.secure_url).toBe(`${HOST}/image/authenticated/f_auto/q_auto/secret.png.png`);
+	});
+
+	it('does NOT append an extension to a fetch remote URL', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'https://example.com/photo.jpg', type: 'fetch' },
+		});
+		const [out] = await optimizeImage(ctx, 0, testCreds);
+		expect(out.format).toBeUndefined();
+		expect(out.secure_url).toBe(
+			`${HOST}/image/fetch/f_auto/q_auto/https://example.com/photo.jpg`,
+		);
+	});
+
+	it('does NOT append an extension to a social-source id with a dotted segment', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'cloudinary.gif', type: 'twitter_name' },
+		});
+		const [out] = await optimizeImage(ctx, 0, testCreds);
+		expect(out.format).toBeUndefined();
+		expect(out.secure_url).toBe(`${HOST}/image/twitter_name/f_auto/q_auto/cloudinary.gif`);
+	});
+
+	it('escapes a fetch URL query string and fragment through the full flow', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'https://example.com/photo.jpg?sig=abc#v1',
+				type: 'fetch',
+			},
+		});
+		const [out] = await optimizeImage(ctx, 0, testCreds);
+		expect(out.secure_url).toBe(
+			`${HOST}/image/fetch/f_auto/q_auto/https://example.com/photo.jpg%3Fsig%3Dabc%23v1`,
+		);
+	});
+
+	it('carries a Convert format via the transformation, not a URL suffix, on a fetch URL', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'https://example.com/photo.jpg',
+				type: 'fetch',
+				convertFormat: 'webp',
+			},
+		});
+		const [out] = await convertImage(ctx, 0, testCreds);
+		// f_webp carries the conversion; the remote URL stays the untouched source id,
+		// and no format key is reported since nothing is appended to the URL.
+		expect(out.format).toBeUndefined();
+		expect(out.secure_url).toBe(`${HOST}/image/fetch/f_webp/https://example.com/photo.jpg`);
+	});
 });
 
 describe('transform:customTransformation', () => {

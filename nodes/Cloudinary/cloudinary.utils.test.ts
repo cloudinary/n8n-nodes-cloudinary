@@ -474,6 +474,66 @@ describe('buildDeliveryUrl', () => {
 			).toBe('https://res.cloudinary.com/demo/image/fetch/sample');
 		});
 	});
+
+	describe('fetch remote-URL escaping', () => {
+		it('leaves a clean fetch URL readable (scheme/host/path unescaped)', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'fetch',
+					publicId: 'https://example.com/photos/cat.jpg',
+				}),
+			).toBe('https://res.cloudinary.com/demo/image/fetch/https://example.com/photos/cat.jpg');
+		});
+
+		it('percent-encodes the query string so it reaches Cloudinary as the path', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'fetch',
+					publicId: 'https://example.com/photo.jpg?sig=abc&w=10',
+				}),
+			).toBe(
+				'https://res.cloudinary.com/demo/image/fetch/https://example.com/photo.jpg%3Fsig%3Dabc%26w%3D10',
+			);
+		});
+
+		it('percent-encodes a fragment so it is not dropped by the browser', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'fetch',
+					publicId: 'https://example.com/photo.jpg#v1',
+				}),
+			).toBe('https://res.cloudinary.com/demo/image/fetch/https://example.com/photo.jpg%23v1');
+		});
+
+		it('escapes spaces and other unsafe chars in a fetch URL', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'fetch',
+					publicId: 'https://example.com/my photo.jpg',
+				}),
+			).toBe('https://res.cloudinary.com/demo/image/fetch/https://example.com/my%20photo.jpg');
+		});
+
+		it('does NOT escape identifiers for non-fetch types', () => {
+			// A stored public_id with a literal `?` is opaque, not a URL — leave it verbatim.
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					publicId: 'weird?name',
+				}),
+			).toBe('https://res.cloudinary.com/demo/image/upload/weird?name');
+		});
+	});
 });
 
 describe('joinTransformation', () => {

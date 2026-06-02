@@ -727,6 +727,9 @@ export const transformFields: INodeProperties[] = [
 						default: '',
 						placeholder: '9:16',
 						description: 'Aspect ratio as width:height (e.g. 9:16) or a decimal (e.g. 1.5).',
+						displayOptions: {
+							show: { stepType: ['crop'], cropMode: ['aspectRatio'] },
+						},
 					},
 					{
 						displayName: 'Component',
@@ -735,6 +738,9 @@ export const transformFields: INodeProperties[] = [
 						default: '',
 						placeholder: 'e_grayscale',
 						description: 'A raw Cloudinary transformation component, used verbatim (qualifiers separated by commas)',
+						displayOptions: {
+							show: { stepType: ['raw'] },
+						},
 					},
 					{
 						displayName: 'Crop By',
@@ -751,6 +757,9 @@ export const transformFields: INodeProperties[] = [
 							},
 					],
 						default: 'dimensions',
+						displayOptions: {
+							show: { stepType: ['crop'] },
+						},
 					},
 					{
 						displayName: 'Duration',
@@ -759,6 +768,9 @@ export const transformFields: INodeProperties[] = [
 						default: '',
 						placeholder: '10',
 						description: 'Clip duration in seconds (du_)',
+						displayOptions: {
+							show: { stepType: ['trim'] },
+						},
 					},
 					{
 						displayName: 'End Offset',
@@ -767,6 +779,9 @@ export const transformFields: INodeProperties[] = [
 						default: '',
 						placeholder: '15',
 						description: 'End time in seconds (eo_)',
+						displayOptions: {
+							show: { stepType: ['trim'] },
+						},
 					},
 					{
 						displayName: 'Fit',
@@ -788,6 +803,9 @@ export const transformFields: INodeProperties[] = [
 					],
 						default: 'limit',
 						description: 'How the asset is fitted to the requested dimensions',
+						displayOptions: {
+							show: { stepType: ['resize'] },
+						},
 					},
 					{
 						displayName: 'Focus',
@@ -809,6 +827,9 @@ export const transformFields: INodeProperties[] = [
 					],
 						default: 'auto',
 						description: 'Which region to keep when cropping (g_)',
+						displayOptions: {
+							show: { stepType: ['crop'] },
+						},
 					},
 					{
 						displayName: 'Height',
@@ -816,6 +837,9 @@ export const transformFields: INodeProperties[] = [
 						type: 'number',
 						default: 0,
 						description: 'Target height in pixels. Leave 0 to size by width only.',
+						displayOptions: {
+							show: { stepType: ['resize'] },
+						},
 					},
 					{
 						displayName: 'Height',
@@ -823,13 +847,20 @@ export const transformFields: INodeProperties[] = [
 						type: 'number',
 						default: 0,
 						description: 'Target height in pixels',
+						displayOptions: {
+							show: { stepType: ['crop'], cropMode: ['dimensions'] },
+						},
 					},
 					{
 						displayName: 'Quality',
 						name: 'quality',
 						type: 'options',
-						default: '',
+						options: QUALITY_OPTIONS,
+						default: 'auto',
 						description: 'Automatic quality level (q_auto[:level])',
+						displayOptions: {
+							show: { stepType: ['optimize'] },
+						},
 					},
 					{
 						displayName: 'Start Offset',
@@ -838,6 +869,9 @@ export const transformFields: INodeProperties[] = [
 						default: '',
 						placeholder: '0',
 						description: 'Start time in seconds (so_)',
+						displayOptions: {
+							show: { stepType: ['trim'] },
+						},
 					},
 					{
 						displayName: 'Target Format',
@@ -846,6 +880,9 @@ export const transformFields: INodeProperties[] = [
 						default: '',
 						placeholder: 'webp',
 						description: 'Delivery format (file extension), without the leading dot',
+						displayOptions: {
+							show: { stepType: ['convert'] },
+						},
 					},
 					{
 						displayName: 'Width',
@@ -853,6 +890,9 @@ export const transformFields: INodeProperties[] = [
 						type: 'number',
 						default: 0,
 						description: 'Target width in pixels. Leave 0 to size by height only.',
+						displayOptions: {
+							show: { stepType: ['resize'] },
+						},
 					},
 					{
 						displayName: 'Width',
@@ -860,6 +900,9 @@ export const transformFields: INodeProperties[] = [
 						type: 'number',
 						default: 0,
 						description: 'Target width in pixels',
+						displayOptions: {
+							show: { stepType: ['crop'], cropMode: ['dimensions'] },
+						},
 					},
 					{
 						displayName: 'Width',
@@ -867,6 +910,9 @@ export const transformFields: INodeProperties[] = [
 						type: 'number',
 						default: 0,
 						description: 'Optional target width in pixels;	height is derived from the aspect ratio',
+						displayOptions: {
+							show: { stepType: ['crop'], cropMode: ['aspectRatio'] },
+						},
 					},
 			],
 			},

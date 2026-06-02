@@ -39,9 +39,18 @@ export const buildTransformResult = (
 		version?: string;
 	},
 ): IDataObject => {
-	// Use the op's explicit format if set (e.g. Convert/Thumbnail); otherwise recover
-	// it from a public_id that carries its own extension, so dotted public_ids resolve.
-	const effectiveFormat = params.format || trailingMediaFormat(params.publicId);
+	// The format becomes the delivery URL's trailing extension, and is meaningful only
+	// for stored-asset types: their public_id is opaque, so the extension is what
+	// selects the delivered representation. The op's explicit format (Convert/Thumbnail)
+	// wins; otherwise we recover one baked into a dotted public_id (see the "doubled
+	// extension" note). For fetch/social sources the public_id is a remote URL /
+	// external id that already carries its own extension, and any conversion rides in
+	// the transformation (e.g. f_webp) — so we append nothing, because suffixing would
+	// corrupt the source identifier. This keeps one invariant: `result.format` is set
+	// iff the URL carries a trailing `.<format>`, and the two always agree.
+	const effectiveFormat = STORED_ASSET_TYPES.has(params.type)
+		? params.format || trailingMediaFormat(params.publicId)
+		: undefined;
 
 	const secureUrl = buildDeliveryUrl({
 		cloudName: creds.cloudName,
@@ -191,17 +200,14 @@ export const buildComponents = (
 // The "doubled extension" delivery encoding — DO NOT collapse it, it is correct.
 //
 // A delivery URL like `.../my_image1234.png.png` looks like a duplication bug. It
-// is not. Cloudinary builds the source path by *unconditional concatenation* of two
-// independent fields — verified in the delivery code:
-//
-//     [public_id, format].reject(&:blank?).join(".")
-//
-// `public_id` is an OPAQUE identifier (the dot in `my_image1234.png` is just part of
-// the string, with no filename/extension meaning), and `format` is a SEPARATE field
-// derived from the asset's decoded bytes. There is no "does the id already end in
-// this extension?" check on Cloudinary's side — the two are simply joined with a dot.
-// Keeping them decoupled is what lets one asset be delivered as .jpg / .webp / .avif
-// by changing only the format while the id stays constant.
+// is not. In a Cloudinary delivery URL the public_id and the format are two
+// independent fields joined with a dot: the public_id is an OPAQUE identifier (the
+// dot in `my_image1234.png` is just part of the string, with no filename/extension
+// meaning) and the format is a SEPARATE trailing extension that selects the
+// delivered representation. Cloudinary does not check whether the id already ends
+// in the requested extension — keeping the two decoupled is what lets one asset be
+// delivered as .jpg / .webp / .avif by changing only the format while the id stays
+// constant.
 //
 // Consequence for us: when a public_id was stored WITH its extension baked in
 // (`my_image1234.png`), the correct URL is `my_image1234.png` + `.` + `png` =
@@ -240,3 +246,16 @@ export const trailingMediaFormat = (publicId: string): string | undefined => {
 	const ext = lastSegment.slice(dot + 1).toLowerCase();
 	return MEDIA_FORMAT_EXTENSIONS.has(ext) ? ext : undefined;
 };
+
+/**
+ * Delivery types whose public_id is a stored Cloudinary asset we own, so the format
+ * is delivered as the URL's trailing extension (see the "doubled extension" note).
+ * For `fetch` and social sources (facebook, twitter, gravatar, youtube, …) the
+ * "public_id" is instead a remote URL or external profile ID whose trailing dotted
+ * segment is part of the source itself — appending any extension there would corrupt
+ * it (e.g. a fetch URL would be delivered as `.../fetch/https://example.com/photo.jpg.jpg`,
+ * or a conversion as `.../fetch/f_webp/https://example.com/photo.webp`). So the format
+ * suffix is gated to this set; other types carry conversion only via the transformation
+ * (e.g. `f_webp`) and pass their identifier through untouched.
+ */
+const STORED_ASSET_TYPES = new Set(['upload', 'private', 'authenticated']);
