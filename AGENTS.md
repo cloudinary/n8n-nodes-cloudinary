@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for coding agents working in this repository. This is an n8n **community node** package — a single node (`n8n-nodes-cloudinary.cloudinary`) and a single credential type (`cloudinaryApi`). No service layer, no SDK; zero runtime deps beyond the `n8n-workflow` peer dep.
+Guidance for coding agents working in this repository. This is an n8n **community node** package — a single node (`n8n-nodes-cloudinary.cloudinary`) and a single credential type (`cloudinaryApi`). No service layer beyond `package.json` `dependencies`.
 
 Deep references live in [docs/](docs/) and are linked inline below — read them when a task touches that area, so this file stays small.
 
