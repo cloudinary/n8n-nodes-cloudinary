@@ -45,7 +45,8 @@ export class CloudinaryApi implements ICredentialType {
 			default: '',
 			placeholder: 'assets.example.com',
 			description:
-				'Custom delivery hostname (CNAME) for your account, if configured. Overrides the default host when building Transform delivery URLs. Leave empty to use res.cloudinary.com.',
+				'Custom delivery hostname (CNAME) for your private CDN account. Leave empty to use the default <cloud>-res.cloudinary.com subdomain.',
+			displayOptions: { show: { privateCdn: [true] } },
 		},
 	];
 
