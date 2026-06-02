@@ -351,7 +351,11 @@ export const transformFields: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		placeholder: 'c_fill,w_800,h_600',
-		description: 'Cloudinary transformation string prepended before the frame selector. Use <code>{{ $json.transformation }}</code> to chain from a previous step.',
+		// `$json` is the n8n expression variable — correctly lowercase. The
+		// miscased-json rule is a false positive here; its autofix would rewrite it
+		// to `$JSON`, which is undefined in n8n and breaks the example. Keep lowercase.
+		// eslint-disable-next-line n8n-nodes-base/node-param-description-miscased-json
+		description: 'Cloudinary transformation string prepended before the frame selector. Use <code>{{ $json.transformation }}</code> to chain from a previous step. Accepts a raw transformation string (e.g. <code>c_fill,w_800,h_600</code>).',
 		displayOptions: {
 			show: { resource: ['transform'], operation: ['videoThumbnail'] },
 		},
