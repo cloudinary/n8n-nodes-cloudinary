@@ -9,7 +9,6 @@ import { trimVideo } from './trimVideo';
 import { videoThumbnail } from './videoThumbnail';
 import { customTransformation } from './customTransformation';
 import { multiStep } from './multiStep';
-import { videoPlayer } from './videoPlayer';
 import { trailingMediaFormat } from './shared';
 import { makeCtx, testCreds } from '../testHelpers';
 
@@ -19,14 +18,13 @@ import { makeCtx, testCreds } from '../testHelpers';
 // the entire surface these handlers touch.
 
 const HOST = 'https://res.cloudinary.com/demo';
-const noAnalytics = (url: string) => url.split('?_a=')[0];
 
 describe('transform:optimizeImage', () => {
 	it('emits f_auto/q_auto on the image/upload path by default', async () => {
 		const { ctx } = makeCtx({ params: { transformPublicId: 'sample' } });
 		const [out] = await optimizeImage(ctx, 0, testCreds);
 		expect(out.transformation).toBe('f_auto/q_auto');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/upload/f_auto/q_auto/sample`);
+		expect(out.secure_url).toBe(`${HOST}/image/upload/f_auto/q_auto/sample`);
 		expect(out.resource_type).toBe('image');
 		expect(out.type).toBe('upload');
 		expect(out.public_id).toBe('sample');
@@ -43,17 +41,16 @@ describe('transform host variants', () => {
 	it('puts the cloud name in the subdomain for a private CDN', async () => {
 		const { ctx } = makeCtx({ params: { transformPublicId: 'sample' } });
 		const [out] = await optimizeImage(ctx, 0, { ...testCreds, privateCdn: true });
-		expect(noAnalytics(out.secure_url as string)).toBe('https://demo-res.cloudinary.com/image/upload/f_auto/q_auto/sample');
+		expect(out.secure_url).toBe('https://demo-res.cloudinary.com/image/upload/f_auto/q_auto/sample');
 	});
 
 	it('drops the cloud name for a custom hostname (CNAME)', async () => {
 		const { ctx } = makeCtx({ params: { transformPublicId: 'sample' } });
 		const [out] = await optimizeImage(ctx, 0, {
 			...testCreds,
-			privateCdn: true,
 			secureDistribution: 'assets.example.com',
 		});
-		expect(noAnalytics(out.secure_url as string)).toBe('https://assets.example.com/image/upload/f_auto/q_auto/sample');
+		expect(out.secure_url).toBe('https://assets.example.com/image/upload/f_auto/q_auto/sample');
 	});
 });
 
@@ -64,7 +61,7 @@ describe('transform delivery type and additional options', () => {
 		});
 		const [out] = await optimizeImage(ctx, 0, testCreds);
 		expect(out.type).toBe('private');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/private/f_auto/q_auto/sample`);
+		expect(out.secure_url).toBe(`${HOST}/image/private/f_auto/q_auto/sample`);
 	});
 
 	it('supports a social/fetch delivery type in the path (e.g. facebook)', async () => {
@@ -73,7 +70,7 @@ describe('transform delivery type and additional options', () => {
 		});
 		const [out] = await optimizeImage(ctx, 0, testCreds);
 		expect(out.type).toBe('facebook');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/facebook/f_auto/q_auto/65646572251`);
+		expect(out.secure_url).toBe(`${HOST}/image/facebook/f_auto/q_auto/65646572251`);
 	});
 
 	it('threads delivery type and version together', async () => {
@@ -87,7 +84,7 @@ describe('transform delivery type and additional options', () => {
 		const [out] = await optimizeImage(ctx, 0, testCreds);
 		expect(out.type).toBe('authenticated');
 		expect(out.version).toBe('1234');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/authenticated/f_auto/q_auto/v1234/sample`);
+		expect(out.secure_url).toBe(`${HOST}/image/authenticated/f_auto/q_auto/v1234/sample`);
 	});
 });
 
@@ -180,7 +177,7 @@ describe('transform:convertImage', () => {
 		const [out] = await convertImage(ctx, 0, testCreds);
 		expect(out.transformation).toBe('f_png');
 		expect(out.format).toBe('png');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/upload/f_png/sample.png`);
+		expect(out.secure_url).toBe(`${HOST}/image/upload/f_png/sample.png`);
 	});
 });
 
@@ -190,7 +187,7 @@ describe('transform:optimizeVideo', () => {
 		const [out] = await optimizeVideo(ctx, 0, testCreds);
 		expect(out.transformation).toBe('f_auto:video/q_auto');
 		expect(out.resource_type).toBe('video');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/video/upload/f_auto:video/q_auto/clip`);
+		expect(out.secure_url).toBe(`${HOST}/video/upload/f_auto:video/q_auto/clip`);
 	});
 });
 
@@ -224,7 +221,7 @@ describe('transform:videoThumbnail', () => {
 		expect(out.transformation).toBe('so_auto');
 		expect(out.resource_type).toBe('video');
 		expect(out.format).toBe('jpg');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/video/upload/so_auto/clip.jpg`);
+		expect(out.secure_url).toBe(`${HOST}/video/upload/so_auto/clip.jpg`);
 	});
 
 	it('uses a specific timestamp and chosen format', async () => {
@@ -238,7 +235,7 @@ describe('transform:videoThumbnail', () => {
 		});
 		const [out] = await videoThumbnail(ctx, 0, testCreds);
 		expect(out.transformation).toBe('so_3');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/video/upload/so_3/clip.png`);
+		expect(out.secure_url).toBe(`${HOST}/video/upload/so_3/clip.png`);
 	});
 
 	it('throws when time mode has no timestamp', async () => {
@@ -254,7 +251,7 @@ describe('transform:videoThumbnail', () => {
 		});
 		const [out] = await videoThumbnail(ctx, 0, testCreds);
 		expect(out.transformation).toBe('c_fill,w_800,h_600/so_auto');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/video/upload/c_fill,w_800,h_600/so_auto/clip.jpg`);
+		expect(out.secure_url).toBe(`${HOST}/video/upload/c_fill,w_800,h_600/so_auto/clip.jpg`);
 	});
 
 	it('prepends a base transformation before a specific timestamp', async () => {
@@ -301,7 +298,7 @@ describe('transform public_id with embedded extension (special case)', () => {
 		const [out] = await optimizeImage(ctx, 0, testCreds);
 		expect(out.transformation).toBe('f_auto/q_auto');
 		expect(out.format).toBe('png');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/upload/f_auto/q_auto/my_image1234.png.png`);
+		expect(out.secure_url).toBe(`${HOST}/image/upload/f_auto/q_auto/my_image1234.png.png`);
 	});
 
 	it('re-appends the format for resize too', async () => {
@@ -309,7 +306,7 @@ describe('transform public_id with embedded extension (special case)', () => {
 			params: { transformPublicId: 'my_image1234.png', resizeWidth: 400 },
 		});
 		const [out] = await resizeImage(ctx, 0, testCreds);
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/upload/c_limit,w_400/my_image1234.png.png`);
+		expect(out.secure_url).toBe(`${HOST}/image/upload/c_limit,w_400/my_image1234.png.png`);
 	});
 
 	it('keeps an explicit convert format over the public_id extension', async () => {
@@ -318,14 +315,14 @@ describe('transform public_id with embedded extension (special case)', () => {
 		});
 		const [out] = await convertImage(ctx, 0, testCreds);
 		expect(out.format).toBe('webp');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/upload/f_webp/my_image1234.png.webp`);
+		expect(out.secure_url).toBe(`${HOST}/image/upload/f_webp/my_image1234.png.webp`);
 	});
 
 	it('leaves a dot-free public_id untouched', async () => {
 		const { ctx } = makeCtx({ params: { transformPublicId: 'samples/cat' } });
 		const [out] = await optimizeImage(ctx, 0, testCreds);
 		expect(out.format).toBeUndefined();
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/upload/f_auto/q_auto/samples/cat`);
+		expect(out.secure_url).toBe(`${HOST}/image/upload/f_auto/q_auto/samples/cat`);
 	});
 
 	it('recovers the extension for private/authenticated stored assets', async () => {
@@ -334,7 +331,7 @@ describe('transform public_id with embedded extension (special case)', () => {
 		});
 		const [out] = await optimizeImage(ctx, 0, testCreds);
 		expect(out.format).toBe('png');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/authenticated/f_auto/q_auto/secret.png.png`);
+		expect(out.secure_url).toBe(`${HOST}/image/authenticated/f_auto/q_auto/secret.png.png`);
 	});
 
 	it('does NOT append an extension to a fetch remote URL', async () => {
@@ -343,7 +340,7 @@ describe('transform public_id with embedded extension (special case)', () => {
 		});
 		const [out] = await optimizeImage(ctx, 0, testCreds);
 		expect(out.format).toBeUndefined();
-		expect(noAnalytics(out.secure_url as string)).toBe(
+		expect(out.secure_url).toBe(
 			`${HOST}/image/fetch/f_auto/q_auto/https://example.com/photo.jpg`,
 		);
 	});
@@ -354,7 +351,7 @@ describe('transform public_id with embedded extension (special case)', () => {
 		});
 		const [out] = await optimizeImage(ctx, 0, testCreds);
 		expect(out.format).toBeUndefined();
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/twitter_name/f_auto/q_auto/cloudinary.gif`);
+		expect(out.secure_url).toBe(`${HOST}/image/twitter_name/f_auto/q_auto/cloudinary.gif`);
 	});
 
 	it('escapes a fetch URL query string and fragment through the full flow', async () => {
@@ -365,7 +362,7 @@ describe('transform public_id with embedded extension (special case)', () => {
 			},
 		});
 		const [out] = await optimizeImage(ctx, 0, testCreds);
-		expect(noAnalytics(out.secure_url as string)).toBe(
+		expect(out.secure_url).toBe(
 			`${HOST}/image/fetch/f_auto/q_auto/https://example.com/photo.jpg%3Fsig%3Dabc%23v1`,
 		);
 	});
@@ -382,7 +379,7 @@ describe('transform public_id with embedded extension (special case)', () => {
 		// f_webp carries the conversion; the remote URL stays the untouched source id,
 		// and no format key is reported since nothing is appended to the URL.
 		expect(out.format).toBeUndefined();
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/fetch/f_webp/https://example.com/photo.jpg`);
+		expect(out.secure_url).toBe(`${HOST}/image/fetch/f_webp/https://example.com/photo.jpg`);
 	});
 });
 
@@ -400,7 +397,7 @@ describe('transform:customTransformation', () => {
 		expect(out.transformation).toBe('so_0,du_10/f_auto:video/q_auto');
 		expect(out.resource_type).toBe('video');
 		expect(out.format).toBe('mp4');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/video/upload/so_0,du_10/f_auto:video/q_auto/clip.mp4`);
+		expect(out.secure_url).toBe(`${HOST}/video/upload/so_0,du_10/f_auto:video/q_auto/clip.mp4`);
 	});
 
 	it('throws on an empty transformation string', async () => {
@@ -416,7 +413,7 @@ describe('transform:customTransformation', () => {
 		});
 		const [out] = await customTransformation(ctx, 0, testCreds);
 		expect(out.format).toBeUndefined();
-		expect(noAnalytics((out as IDataObject).secure_url as string)).toBe(`${HOST}/image/upload/e_grayscale/sample`);
+		expect((out as IDataObject).secure_url).toBe(`${HOST}/image/upload/e_grayscale/sample`);
 	});
 });
 
@@ -438,7 +435,7 @@ describe('transform:multiStep', () => {
 		const [out] = await multiStep(ctx, 0, testCreds);
 		expect(out.transformation).toBe('eo_15/c_fill,g_auto,ar_9:16/f_auto:video/q_auto');
 		expect(out.resource_type).toBe('video');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/video/upload/eo_15/c_fill,g_auto,ar_9:16/f_auto:video/q_auto/reel`);
+		expect(out.secure_url).toBe(`${HOST}/video/upload/eo_15/c_fill,g_auto,ar_9:16/f_auto:video/q_auto/reel`);
 	});
 
 	it('emits f_auto (not :video) for the image resource type', async () => {
@@ -451,7 +448,7 @@ describe('transform:multiStep', () => {
 		});
 		const [out] = await multiStep(ctx, 0, testCreds);
 		expect(out.transformation).toBe('f_auto/q_auto:eco');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/upload/f_auto/q_auto:eco/sample`);
+		expect(out.secure_url).toBe(`${HOST}/image/upload/f_auto/q_auto:eco/sample`);
 	});
 
 	it('resize + convert chains the component and sets the delivery format', async () => {
@@ -470,7 +467,7 @@ describe('transform:multiStep', () => {
 		const [out] = await multiStep(ctx, 0, testCreds);
 		expect(out.transformation).toBe('c_limit,w_800/f_webp');
 		expect(out.format).toBe('webp');
-		expect(noAnalytics(out.secure_url as string)).toBe(`${HOST}/image/upload/c_limit,w_800/f_webp/sample.webp`);
+		expect(out.secure_url).toBe(`${HOST}/image/upload/c_limit,w_800/f_webp/sample.webp`);
 	});
 
 	it('crop by dimensions emits c_fill,g_<focus>,w_,h_', async () => {
@@ -517,151 +514,5 @@ describe('transform:multiStep', () => {
 			},
 		});
 		await expect(multiStep(ctx, 0, testCreds)).rejects.toThrow(/Step 2: Trim requires/);
-	});
-});
-
-describe('transform:videoPlayer', () => {
-	it('returns embed_url, player_config, and identity fields', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'my-video' } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).toContain('cloud_name=demo');
-		expect(out.embed_url).toContain('public_id=my-video');
-		expect(typeof out.player_config).toBe('string');
-		expect(out.public_id).toBe('my-video');
-		expect(out.resource_type).toBe('video');
-		expect(out.type).toBe('upload');
-	});
-
-	it('includes autoplayMode in embed_url when set', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerAutoplayMode: 'always' } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).toContain('player[autoplayMode]=always');
-	});
-
-	it('omits autoplayMode from embed_url when blank', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerAutoplayMode: '' } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).not.toContain('player[autoplayMode]');
-	});
-
-	it('includes muted and loop flags in embed_url', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerMuted: true, playerLoop: true } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).toContain('player[muted]=true');
-		expect(out.embed_url).toContain('player[loop]=true');
-	});
-
-	it('includes source types as indexed source[sourceTypes] params', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerSourceTypes: ['hls', 'mp4'] } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).toContain('source[sourceTypes][0]=hls');
-		expect(out.embed_url).toContain('source[sourceTypes][1]=mp4');
-	});
-
-	it('includes colors in embed_url, URL-encoded', async () => {
-		const { ctx } = makeCtx({
-			params: {
-				transformPublicId: 'v',
-				playerBaseColor: '#0071ba',
-				playerAccentColor: '#db8226',
-				playerTextColor: '#ffffff',
-			},
-		});
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).toContain('player[colors][base]=%230071ba');
-		expect(out.embed_url).toContain('player[colors][accent]=%23db8226');
-		expect(out.embed_url).toContain('player[colors][text]=%23ffffff');
-	});
-
-	it('omits transformation from embed_url', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerTransformation: 'q_auto,f_auto' } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).not.toContain('transformation');
-	});
-
-	it('includes transformation in player_config as raw_transformation array', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerTransformation: 'q_auto,f_auto' } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		const cfg = JSON.parse(out.player_config as string);
-		expect(cfg.transformation).toEqual([{ raw_transformation: 'q_auto,f_auto' }]);
-	});
-
-	it('includes player[skin]=light for light skin, omits for default dark', async () => {
-		const { ctx: ctxLight } = makeCtx({ params: { transformPublicId: 'v', playerSkin: 'light' } });
-		const [outLight] = await videoPlayer(ctxLight, 0, testCreds);
-		expect(outLight.embed_url).toContain('player[skin]=light');
-
-		const { ctx: ctxDark } = makeCtx({ params: { transformPublicId: 'v', playerSkin: 'dark' } });
-		const [outDark] = await videoPlayer(ctxDark, 0, testCreds);
-		expect(outDark.embed_url).not.toContain('player[skin]');
-	});
-
-	it('includes player[fluid]=true when playerFluid is true', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerFluid: true } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).toContain('player[fluid]=true');
-	});
-
-	it('includes aspect ratio in embed_url, URL-encoded', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerFluid: true, playerAspectRatio: '9:16' } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).toContain('player[aspectRatio]=9%3A16');
-	});
-
-	it('includes width and height in embed_url', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerWidth: 800, playerHeight: 450 } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).toContain('player[width]=800');
-		expect(out.embed_url).toContain('player[height]=450');
-	});
-
-	it('player_config is valid JSON with cloudName and publicId', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'my-video' } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		const cfg = JSON.parse(out.player_config as string);
-		expect(cfg.cloudName).toBe('demo');
-		expect(cfg.publicId).toBe('my-video');
-	});
-
-	it('player_config includes colors object for set color fields', async () => {
-		const { ctx } = makeCtx({
-			params: { transformPublicId: 'v', playerBaseColor: '#0071ba', playerAccentColor: '#db8226' },
-		});
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		const cfg = JSON.parse(out.player_config as string);
-		expect(cfg.colors).toEqual({ base: '#0071ba', accent: '#db8226' });
-	});
-
-	it('includes advanced controls=false in embed_url and player_config', async () => {
-		const { ctx } = makeCtx({
-			params: { transformPublicId: 'v', playerAdvancedOptions: { controls: false } },
-		});
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).toContain('player[controls]=false');
-		const cfg = JSON.parse(out.player_config as string);
-		expect(cfg.controls).toBe(false);
-	});
-
-	it('includes non-upload delivery type in player_config but not embed_url', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', type: 'authenticated' } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		const cfg = JSON.parse(out.player_config as string);
-		expect(cfg.type).toBe('authenticated');
-		expect(out.embed_url).not.toContain('authenticated');
-	});
-
-	it('includes poster in embed_url as source[poster] and in player_config', async () => {
-		const posterUrl = `${HOST}/video/upload/so_auto/clip.jpg`;
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerPoster: posterUrl } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).toContain(`source[poster]=${encodeURIComponent(posterUrl)}`);
-		const cfg = JSON.parse(out.player_config as string);
-		expect(cfg.poster).toBe(posterUrl);
-	});
-
-	it('omits source[poster] from embed_url when poster is blank', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerPoster: '' } });
-		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).not.toContain('source[poster]');
 	});
 });

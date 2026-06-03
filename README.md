@@ -46,6 +46,10 @@ If you're a user with a Master admin, Admin, or Technical admin role, you can fi
 4. From the top of the page copy the **Cloud name**.
 5. Enter the cloud name, api key and api secret to your n8n credential.
 
+#### Private CDN / custom delivery hostname (advanced)
+
+Most users can skip this. If your organization is on a **Advanced plan** that uses a [private CDN distribution or a custom delivery hostname (CNAME)](https://cloudinary.com/documentation/advanced_url_delivery_options#private_cdns_and_custom_delivery_hostnames_cnames), enable **Private CDN** in the credential and enter your **Custom Delivery Hostname** so the node builds delivery URLs against your private distribution instead of the default `res.cloudinary.com`. Leave these off if you're unsure — they don't apply to standard accounts.
+
 
 ## Related resources
 

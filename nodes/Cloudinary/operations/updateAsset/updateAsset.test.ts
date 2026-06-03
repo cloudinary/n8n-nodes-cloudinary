@@ -4,7 +4,6 @@ import { deleteAssets } from './deleteAssets';
 import { getAsset } from './getAsset';
 import { updateTags } from './updateTags';
 import { updateMetadata } from './updateMetadata';
-import { updateDisplayName } from './updateDisplayName';
 import { makeCtx, lastRequest, testCreds } from '../testHelpers';
 
 const resourceParams = { publicId: 'sample', resourceType: 'image', type: 'upload' };
@@ -201,23 +200,5 @@ describe('updateMetadata handler', () => {
 		await expect(updateMetadata(ctx, 0, testCreds)).rejects.toThrow(
 			'Invalid JSON for structured metadata',
 		);
-	});
-});
-
-describe('updateDisplayName handler', () => {
-	it('PUTs the asset_id URL with body { display_name } and HTTP Basic auth', async () => {
-		const { ctx, http } = makeCtx({
-			params: { assetId: 'abc123', displayName: 'Sunset Cliffs' },
-		});
-
-		await updateDisplayName(ctx, 0, testCreds);
-
-		const req = lastRequest(http);
-		expect(req.method).toBe('PUT');
-		expect(req.url).toBe(ASSET_ID_URL);
-		expect(req.auth).toEqual({ username: testCreds.apiKey, password: testCreds.apiSecret });
-		expect(req.body).toEqual({ display_name: 'Sunset Cliffs' });
-		// No signature — this endpoint authenticates via Basic, like other Admin ops.
-		expect((req.body as IDataObject).signature).toBeUndefined();
 	});
 });

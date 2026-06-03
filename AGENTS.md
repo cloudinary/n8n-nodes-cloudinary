@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for coding agents working in this repository. This is an n8n **community node** package — a single node (`n8n-nodes-cloudinary.cloudinary`) and a single credential type (`cloudinaryApi`). No service layer beyond `package.json` `dependencies`.
+Guidance for coding agents working in this repository. This is an n8n **community node** package — a single node (`n8n-nodes-cloudinary.cloudinary`) and a single credential type (`cloudinaryApi`). No service layer, no SDK; zero runtime deps beyond the `n8n-workflow` peer dep.
 
 Deep references live in [docs/](docs/) and are linked inline below — read them when a task touches that area, so this file stays small.
 
@@ -18,6 +18,7 @@ Deep references live in [docs/](docs/) and are linked inline below — read them
 
 These bite often; the linked docs carry the full reasoning.
 
+- **No runtime dependencies — ever.** n8n forbids verified community nodes from declaring any runtime `dependencies`; `package.json` must carry only `devDependencies` and the `n8n-workflow` peer dep. This is a hard publishing gate, not a style preference — don't reach for an SDK or helper library; hand-roll it (see the pure-JS SHA-256 and multipart builders) or it won't pass verification. → [n8n verification rules](https://docs.n8n.io/integrations/community-nodes/build-community-nodes/#submit-your-node-for-verification-by-n8n)
 - **Tests use Vitest, not Jest.** `*.test.ts` is excluded from `tsconfig.json`, so any shared test util importing `vitest` must also be excluded or it leaks into `dist/`. → [docs/architecture.md#testing](docs/architecture.md#testing)
 - **Three interaction flows** (signed Upload API / HTTP Basic auth / delivery-URL construction with no API call) — pick the right one when adding an op. → [docs/architecture.md#three-flows](docs/architecture.md#three-flows)
 - **Transformation logic lives in the component builders**, not the handlers — Multi-Step is a second consumer and must not drift. Change the builder, not a handler. → [docs/transforms.md](docs/transforms.md)

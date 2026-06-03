@@ -10,7 +10,7 @@ export const resourceProperties: INodeProperties[] = [
 			{
 				name: 'Asset',
 				value: 'asset',
-				description: 'Work with existing assets by asset ID: get, search, delete, update tags/metadata/display name',
+				description: 'Work with existing assets by asset ID: get, search, delete, update tags/metadata',
 			},
 			{
 				name: 'Asset (Legacy, by Public ID)',
@@ -31,6 +31,11 @@ export const resourceProperties: INodeProperties[] = [
 				name: 'Upload',
 				value: 'upload',
 				description: 'Upload new assets from a URL or binary file data',
+			},
+			{
+				name: 'Widget',
+				value: 'widget',
+				description: 'Generate Cloudinary widgets and embeds, such as the Video Player (no upload, no API call)',
 			},
 		],
 		default: 'upload',
@@ -73,6 +78,12 @@ export const resourceProperties: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'Combine Transformations',
+				value: 'combineTransformations',
+				description: 'Build a delivery URL that chains several transformation steps in order. Outputs secure_url and a reusable transformation string.',
+				action: 'Combine transformations',
+			},
+			{
 				name: 'Convert Image Format',
 				value: 'convertImage',
 				description: 'Build a delivery URL that converts an image to another format. Outputs secure_url and a reusable transformation string.',
@@ -89,12 +100,6 @@ export const resourceProperties: INodeProperties[] = [
 				value: 'customTransformation',
 				description: 'Build a delivery URL from a raw Cloudinary transformation string. Outputs secure_url and a reusable transformation string.',
 				action: 'Apply a custom transformation',
-			},
-			{
-				name: 'Multi-Step Transformation',
-				value: 'multiStep',
-				description: 'Build a delivery URL that chains several transformation steps in order. Outputs secure_url and a reusable transformation string.',
-				action: 'Apply a multi step transformation',
 			},
 			{
 				name: 'Optimize Image',
@@ -121,12 +126,6 @@ export const resourceProperties: INodeProperties[] = [
 				action: 'Trim a video',
 			},
 			{
-				name: 'Video Player',
-				value: 'videoPlayer',
-				description: 'Generate embed code and config for the Cloudinary Video Player. Outputs embed_url and a player_config JSON string.',
-				action: 'Generate a video player embed',
-			},
-			{
 				name: 'Video Thumbnail',
 				value: 'videoThumbnail',
 				description: 'Build a delivery URL for a still image frame from a video. Outputs secure_url and a reusable transformation string.',
@@ -134,6 +133,26 @@ export const resourceProperties: INodeProperties[] = [
 			},
 		],
 		default: 'optimizeImage',
+	},
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['widget'],
+			},
+		},
+		options: [
+			{
+				name: 'Video Player',
+				value: 'videoPlayer',
+				description: 'Generate embed code and config for the Cloudinary Video Player. Outputs embed_url and a player_config JSON string.',
+				action: 'Generate a video player embed',
+			},
+		],
+		default: 'videoPlayer',
 	},
 	{
 		displayName: 'Operation',
@@ -163,12 +182,6 @@ export const resourceProperties: INodeProperties[] = [
 				value: 'search',
 				description: 'Search for assets using a Cloudinary search expression',
 				action: 'Search assets',
-			},
-			{
-				name: 'Update Asset Display Name',
-				value: 'updateDisplayName',
-				description: 'Update the display name of an asset by asset ID',
-				action: 'Update asset display name',
 			},
 			{
 				name: 'Update Asset Structured Metadata',

@@ -333,74 +333,68 @@ describe('buildResourceDeleteUrl', () => {
 	});
 });
 
-/** Strip the ?_a= analytics slug so URL structure tests stay readable. */
-const noAnalytics = (url: string) => url.split('?_a=')[0];
-
 describe('buildDeliveryUrl', () => {
-	describe('analytics slug', () => {
-		it('appends a ?_a= slug to every delivery URL', () => {
-			const url = buildDeliveryUrl({
-				cloudName: 'demo',
-				resourceType: 'image',
-				type: 'upload',
-				publicId: 'sample',
-			});
-			expect(url).toMatch(/\?_a=[A-Za-z0-9+/]{9,}$/);
-		});
-	});
-
 	describe('host resolution', () => {
 		it('uses the shared host with the cloud name in the path by default', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'upload',
 					transformation: 'f_auto/q_auto',
 					publicId: 'sample',
-				})),
+				}),
 			).toBe('https://res.cloudinary.com/demo/image/upload/f_auto/q_auto/sample');
 		});
 
 		it('moves the cloud name into the subdomain for a private CDN', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'upload',
 					transformation: 'f_auto/q_auto',
 					publicId: 'sample',
 					privateCdn: true,
-				})),
+				}),
 			).toBe('https://demo-res.cloudinary.com/image/upload/f_auto/q_auto/sample');
 		});
 
 		it('drops the cloud name entirely for a custom hostname (CNAME)', () => {
-			// secureDistribution requires privateCdn: true — Cloudinary only issues CNAMEs
-			// to private-CDN accounts, so the two fields always appear together.
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'upload',
 					transformation: 'f_auto/q_auto',
 					publicId: 'sample',
-					privateCdn: true,
 					secureDistribution: 'assets.example.com',
-				})),
+				}),
 			).toBe('https://assets.example.com/image/upload/f_auto/q_auto/sample');
 		});
 
-		it('strips a scheme and trailing slash from a pasted custom hostname', () => {
+		it('lets a custom hostname win over the private-CDN flag', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'upload',
 					publicId: 'sample',
 					privateCdn: true,
+					secureDistribution: 'assets.example.com',
+				}),
+			).toBe('https://assets.example.com/image/upload/sample');
+		});
+
+		it('strips a scheme and trailing slash from a pasted custom hostname', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					publicId: 'sample',
 					secureDistribution: 'https://assets.example.com/',
-				})),
+				}),
 			).toBe('https://assets.example.com/image/upload/sample');
 		});
 	});
@@ -408,75 +402,75 @@ describe('buildDeliveryUrl', () => {
 	describe('path composition', () => {
 		it('omits the transformation segment when none is given', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({ cloudName: 'demo', resourceType: 'image', type: 'upload', publicId: 'sample' })),
+				buildDeliveryUrl({ cloudName: 'demo', resourceType: 'image', type: 'upload', publicId: 'sample' }),
 			).toBe('https://res.cloudinary.com/demo/image/upload/sample');
 		});
 
 		it('omits an empty-string transformation', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'video',
 					type: 'upload',
 					transformation: '',
 					publicId: 'clip',
-				})),
+				}),
 			).toBe('https://res.cloudinary.com/demo/video/upload/clip');
 		});
 
 		it('appends the format as an extension on the public id', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'video',
 					type: 'upload',
 					transformation: 'so_2',
 					publicId: 'clip',
 					format: 'jpg',
-				})),
+				}),
 			).toBe('https://res.cloudinary.com/demo/video/upload/so_2/clip.jpg');
 		});
 
 		it('emits a v-prefixed version segment before the public id', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'upload',
 					publicId: 'sample',
 					version: 1234567890,
-				})),
+				}),
 			).toBe('https://res.cloudinary.com/demo/image/upload/v1234567890/sample');
 		});
 
 		it('omits the version segment for an empty-string version', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'upload',
 					publicId: 'sample',
 					version: '',
-				})),
+				}),
 			).toBe('https://res.cloudinary.com/demo/image/upload/sample');
 		});
 
 		it('preserves a folder-nested public id verbatim', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'upload',
 					transformation: 'f_auto/q_auto',
 					publicId: 'folder/sub/sample',
 					format: 'webp',
-				})),
+				}),
 			).toBe('https://res.cloudinary.com/demo/image/upload/f_auto/q_auto/folder/sub/sample.webp');
 		});
 
 		it('supports a non-upload delivery type', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({ cloudName: 'demo', resourceType: 'image', type: 'fetch', publicId: 'sample' })),
+				buildDeliveryUrl({ cloudName: 'demo', resourceType: 'image', type: 'fetch', publicId: 'sample' }),
 			).toBe('https://res.cloudinary.com/demo/image/fetch/sample');
 		});
 	});
@@ -484,23 +478,23 @@ describe('buildDeliveryUrl', () => {
 	describe('fetch remote-URL escaping', () => {
 		it('leaves a clean fetch URL readable (scheme/host/path unescaped)', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'fetch',
 					publicId: 'https://example.com/photos/cat.jpg',
-				})),
+				}),
 			).toBe('https://res.cloudinary.com/demo/image/fetch/https://example.com/photos/cat.jpg');
 		});
 
 		it('percent-encodes the query string so it reaches Cloudinary as the path', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'fetch',
 					publicId: 'https://example.com/photo.jpg?sig=abc&w=10',
-				})),
+				}),
 			).toBe(
 				'https://res.cloudinary.com/demo/image/fetch/https://example.com/photo.jpg%3Fsig%3Dabc%26w%3D10',
 			);
@@ -508,37 +502,36 @@ describe('buildDeliveryUrl', () => {
 
 		it('percent-encodes a fragment so it is not dropped by the browser', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'fetch',
 					publicId: 'https://example.com/photo.jpg#v1',
-				})),
+				}),
 			).toBe('https://res.cloudinary.com/demo/image/fetch/https://example.com/photo.jpg%23v1');
 		});
 
 		it('escapes spaces and other unsafe chars in a fetch URL', () => {
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'fetch',
 					publicId: 'https://example.com/my photo.jpg',
-				})),
+				}),
 			).toBe('https://res.cloudinary.com/demo/image/fetch/https://example.com/my%20photo.jpg');
 		});
 
-		it('percent-encodes ? in non-fetch public ids', () => {
-			// A bare `?` in a delivery URL path starts the query string at the CDN level,
-			// so the SDK encodes it as %3F. This is the correct behaviour.
+		it('does NOT escape identifiers for non-fetch types', () => {
+			// A stored public_id with a literal `?` is opaque, not a URL — leave it verbatim.
 			expect(
-				noAnalytics(buildDeliveryUrl({
+				buildDeliveryUrl({
 					cloudName: 'demo',
 					resourceType: 'image',
 					type: 'upload',
 					publicId: 'weird?name',
-				})),
-			).toBe('https://res.cloudinary.com/demo/image/upload/weird%3Fname');
+				}),
+			).toBe('https://res.cloudinary.com/demo/image/upload/weird?name');
 		});
 	});
 });

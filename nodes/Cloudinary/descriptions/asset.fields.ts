@@ -11,7 +11,7 @@ export const assetFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['asset'],
-				operation: ['getAsset', 'updateDisplayName', 'updateMetadata'],
+				operation: ['getAsset', 'updateMetadata'],
 			},
 		},
 	},
@@ -212,20 +212,6 @@ export const assetFields: INodeProperties[] = [
 					'Comma-separated list of transformation strings; only the listed derived assets are deleted',
 			},
 		],
-	},
-	{
-		displayName: 'Display Name',
-		name: 'displayName',
-		type: 'string',
-		default: '',
-		description: 'The new display name to set on the asset',
-		required: true,
-		displayOptions: {
-			show: {
-				resource: ['asset'],
-				operation: ['updateDisplayName'],
-			},
-		},
 	},
 	{
 		displayName: 'Tags',

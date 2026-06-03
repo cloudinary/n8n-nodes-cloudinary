@@ -5,7 +5,6 @@ import { deleteAssets } from './updateAsset/deleteAssets';
 import { getAsset } from './updateAsset/getAsset';
 import { updateTags } from './updateAsset/updateTags';
 import { updateMetadata } from './updateAsset/updateMetadata';
-import { updateDisplayName } from './updateAsset/updateDisplayName';
 import { updateTags as assetUpdateTags } from './asset/updateTags';
 import { updateMetadata as assetUpdateMetadata } from './asset/updateMetadata';
 import { search } from './admin/search';
@@ -20,7 +19,7 @@ import { trimVideo } from './transform/trimVideo';
 import { videoThumbnail } from './transform/videoThumbnail';
 import { customTransformation } from './transform/customTransformation';
 import { multiStep } from './transform/multiStep';
-import { videoPlayer } from './transform/videoPlayer';
+import { videoPlayer } from './widget/videoPlayer';
 
 /**
  * Maps `${resource}:${operation}` to its handler. Add a new operation by
@@ -35,7 +34,6 @@ export const operationHandlers: Record<string, OperationHandler> = {
 	'asset:deleteAssets': deleteAssets,
 	'asset:updateTags': assetUpdateTags,
 	'asset:updateMetadata': assetUpdateMetadata,
-	'asset:updateDisplayName': updateDisplayName,
 	'asset:search': search,
 	'admin:getTags': getTags,
 	'admin:getMetadataFields': getMetadataFields,
@@ -47,6 +45,6 @@ export const operationHandlers: Record<string, OperationHandler> = {
 	'transform:trimVideo': trimVideo,
 	'transform:videoThumbnail': videoThumbnail,
 	'transform:customTransformation': customTransformation,
-	'transform:multiStep': multiStep,
-	'transform:videoPlayer': videoPlayer,
+	'transform:combineTransformations': multiStep,
+	'widget:videoPlayer': videoPlayer,
 };

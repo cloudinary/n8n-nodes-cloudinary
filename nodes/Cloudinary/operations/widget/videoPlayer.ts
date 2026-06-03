@@ -1,6 +1,6 @@
 import { IDataObject } from 'n8n-workflow';
 import { OperationHandler } from '../types';
-import { readTransformInput } from './shared';
+import { readTransformInput } from '../transform/shared';
 
 interface PlayerParams {
 	publicId: string;
