@@ -129,7 +129,7 @@ export const transformFields: INodeProperties[] = [
 			{ name: 'Scale (Exact)', value: 'scale', description: 'Force exact dimensions; may distort if both are set' },
 		],
 		default: 'limit',
-		description: 'How the image is fitted to the requested dimensions. Note: Resize does not auto-optimize — chain Optimize Image after it, or use Combine Transformations, to add f_auto/q_auto.',
+		description: 'How the image is fitted to the requested dimensions. Note: Resize does not auto-optimize — chain "Image: Optimize" after it, or use "Compose: Combine Transformations", to add f_auto/q_auto.',
 		displayOptions: {
 			show: { resource: ['transform'], operation: ['resizeImage'] },
 		},
@@ -203,7 +203,7 @@ export const transformFields: INodeProperties[] = [
 			{ name: 'Center', value: 'center', description: 'Center the crop on the middle of the image' },
 		],
 		default: 'auto',
-		description: 'Which part of the image to keep in focus when cropping. Note: Crop does not auto-optimize — chain Optimize Image after it, or use Combine Transformations, to add f_auto/q_auto.',
+		description: 'Which part of the image to keep in focus when cropping. Note: Crop does not auto-optimize — chain "Image: Optimize" after it, or use "Compose: Combine Transformations", to add f_auto/q_auto.',
 		displayOptions: {
 			show: { resource: ['transform'], operation: ['cropImage'] },
 		},

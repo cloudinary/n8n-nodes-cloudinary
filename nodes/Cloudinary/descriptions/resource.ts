@@ -6,21 +6,14 @@ export const resourceProperties: INodeProperties[] = [
 		name: 'resource',
 		type: 'options',
 		noDataExpression: true,
+		// Order is curated for usefulness, not alphabetized: the primary Upload and
+		// Transform flows lead, and the deprecated legacy resource sinks to the bottom.
+		// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 		options: [
 			{
-				name: 'Asset',
-				value: 'asset',
-				description: 'Work with existing assets by asset ID: get, search, delete, update tags/metadata',
-			},
-			{
-				name: 'Asset (Legacy, by Public ID)',
-				value: 'updateAsset',
-				description: 'Deprecated — prefer the Asset resource. Public-ID-based tag and metadata updates.',
-			},
-			{
-				name: 'Library',
-				value: 'admin',
-				description: 'Account-level lookups: list tags and structured-metadata field definitions',
+				name: 'Upload',
+				value: 'upload',
+				description: 'Upload new assets from a URL or binary file data',
 			},
 			{
 				name: 'Transform',
@@ -28,14 +21,24 @@ export const resourceProperties: INodeProperties[] = [
 				description: 'Build delivery and transformation URLs for images and videos (no upload, no API call)',
 			},
 			{
-				name: 'Upload',
-				value: 'upload',
-				description: 'Upload new assets from a URL or binary file data',
+				name: 'Asset',
+				value: 'asset',
+				description: 'Work with existing assets by asset ID: get, search, delete, update tags/metadata',
 			},
 			{
 				name: 'Widget',
 				value: 'widget',
 				description: 'Generate Cloudinary widgets and embeds, such as the Video Player (no upload, no API call)',
+			},
+			{
+				name: 'Library',
+				value: 'admin',
+				description: 'Account-level lookups: list tags and structured-metadata field definitions',
+			},
+			{
+				name: 'Asset (Legacy, by Public ID)',
+				value: 'updateAsset',
+				description: 'Deprecated — prefer the Asset resource. Public-ID-based tag and metadata updates.',
 			},
 		],
 		default: 'upload',
@@ -76,62 +79,70 @@ export const resourceProperties: INodeProperties[] = [
 				resource: ['transform'],
 			},
 		},
+		// Each name/action is prefixed with a category ("Compose:"/"Image:"/"Video:") so the
+		// alphabetical lint rule clusters them into groups in both the operation dropdown
+		// and the Add-action panel. "Compose" sorts before "Image"/"Video", so the flagship
+		// Combine Transformations leads the list. name and action are kept identical so both
+		// surfaces read the same; that requires disabling the sentence-case action rule,
+		// which would otherwise strip the colon and lower-case the label.
+		/* eslint-disable n8n-nodes-base/node-param-operation-option-action-miscased */
 		options: [
 			{
-				name: 'Combine Transformations',
+				name: 'Compose: Combine Transformations',
 				value: 'combineTransformations',
 				description: 'Build a delivery URL that chains several transformation steps in order. Outputs secure_url and a reusable transformation string.',
-				action: 'Combine transformations',
+				action: 'Compose: Combine Transformations',
 			},
 			{
-				name: 'Convert Image Format',
-				value: 'convertImage',
-				description: 'Build a delivery URL that converts an image to another format. Outputs secure_url and a reusable transformation string.',
-				action: 'Convert an image format',
-			},
-			{
-				name: 'Crop Image',
-				value: 'cropImage',
-				description: 'Build a delivery URL that crops an image to fixed dimensions or an aspect ratio. Outputs secure_url and a reusable transformation string.',
-				action: 'Crop an image',
-			},
-			{
-				name: 'Custom Transformation',
+				name: 'Compose: Custom Transformation String',
 				value: 'customTransformation',
 				description: 'Build a delivery URL from a raw Cloudinary transformation string. Outputs secure_url and a reusable transformation string.',
-				action: 'Apply a custom transformation',
+				action: 'Compose: Custom Transformation String',
 			},
 			{
-				name: 'Optimize Image',
+				name: 'Image: Convert Format',
+				value: 'convertImage',
+				description: 'Build a delivery URL that converts an image to another format. Outputs secure_url and a reusable transformation string.',
+				action: 'Image: Convert Format',
+			},
+			{
+				name: 'Image: Crop',
+				value: 'cropImage',
+				description: 'Build a delivery URL that crops an image to fixed dimensions or an aspect ratio. Outputs secure_url and a reusable transformation string.',
+				action: 'Image: Crop',
+			},
+			{
+				name: 'Image: Optimize',
 				value: 'optimizeImage',
 				description: 'Build a delivery URL that auto-optimizes an image (format + quality). Outputs secure_url and a reusable transformation string.',
-				action: 'Optimize an image',
+				action: 'Image: Optimize',
 			},
 			{
-				name: 'Optimize Video',
-				value: 'optimizeVideo',
-				description: 'Build a delivery URL that auto-optimizes a video (format/codec + quality). Outputs secure_url and a reusable transformation string.',
-				action: 'Optimize a video',
-			},
-			{
-				name: 'Resize Image',
+				name: 'Image: Resize',
 				value: 'resizeImage',
 				description: 'Build a delivery URL that resizes an image to a width and/or height. Outputs secure_url and a reusable transformation string.',
-				action: 'Resize an image',
+				action: 'Image: Resize',
 			},
 			{
-				name: 'Trim Video',
-				value: 'trimVideo',
-				description: 'Build a delivery URL that trims a video to a start, end, and/or duration. Outputs secure_url and a reusable transformation string.',
-				action: 'Trim a video',
+				name: 'Video: Optimize',
+				value: 'optimizeVideo',
+				description: 'Build a delivery URL that auto-optimizes a video (format/codec + quality). Outputs secure_url and a reusable transformation string.',
+				action: 'Video: Optimize',
 			},
 			{
-				name: 'Video Thumbnail',
+				name: 'Video: Thumbnail',
 				value: 'videoThumbnail',
 				description: 'Build a delivery URL for a still image frame from a video. Outputs secure_url and a reusable transformation string.',
-				action: 'Generate a video thumbnail',
+				action: 'Video: Thumbnail',
+			},
+			{
+				name: 'Video: Trim',
+				value: 'trimVideo',
+				description: 'Build a delivery URL that trims a video to a start, end, and/or duration. Outputs secure_url and a reusable transformation string.',
+				action: 'Video: Trim',
 			},
 		],
+		/* eslint-enable n8n-nodes-base/node-param-operation-option-action-miscased */
 		default: 'optimizeImage',
 	},
 	{
