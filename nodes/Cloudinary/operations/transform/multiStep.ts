@@ -7,6 +7,7 @@ import {
 	convertComponents,
 	cropComponents,
 	optimizeComponents,
+	padBackgroundSuffix,
 	readTransformInput,
 	resizeComponents,
 	trimComponents,
@@ -73,7 +74,12 @@ function stepComponents(step: IDataObject, resourceType: string): string[] {
 		case 'trim':
 			return trimComponents({ start: str(step.start), end: str(step.end), duration: str(step.duration) });
 		case 'resize':
-			return resizeComponents({ width: num(step.width), height: num(step.height), fit: str(step.fit) || 'limit' });
+			return resizeComponents({
+				width: num(step.width),
+				height: num(step.height),
+				fit: str(step.fit) || 'limit',
+				background: padBackgroundSuffix(str(step.padBackground), str(step.padBackgroundColor)),
+			});
 		case 'crop': {
 			const cropBy = str(step.cropMode) || 'dimensions';
 			return cropComponents({

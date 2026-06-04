@@ -94,15 +94,50 @@ export const qualityQualifier = (quality: string): string =>
 // "Keep Multi-Step in sync" note in CLAUDE.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** `c_<fit>,w_,h_` — resize to a width and/or height. */
-export const resizeComponents = (p: { width: number; height: number; fit: string }): string[] => {
+/**
+ * `[b_<background>,]c_<fit>,w_,h_` — resize to a width and/or height. The optional
+ * `background` is meaningful only for the pad fit modes (`pad`/`lpad`/`mpad`), which
+ * fill the area around the image; it is the raw `b_` suffix (`auto`, `blurred`, a
+ * named color like `white`, or `rgb:RRGGBB`). Empty leaves Cloudinary's default
+ * (black) padding. It is ignored for non-pad modes, which never pad.
+ */
+export const resizeComponents = (p: {
+	width: number;
+	height: number;
+	fit: string;
+	background?: string;
+}): string[] => {
 	if (!p.width && !p.height) {
 		throw new Error('Resize requires a width and/or a height');
 	}
-	const qualifiers = [`c_${p.fit}`];
+	const qualifiers: string[] = [];
+	const background = (p.background ?? '').trim();
+	if (background && PAD_FIT_MODES.has(p.fit)) qualifiers.push(`b_${background}`);
+	qualifiers.push(`c_${p.fit}`);
 	if (p.width) qualifiers.push(`w_${p.width}`);
 	if (p.height) qualifiers.push(`h_${p.height}`);
 	return [qualifiers.join(',')];
+};
+
+/** Fit modes that pad the area around the image, so a background color applies. */
+const PAD_FIT_MODES = new Set(['pad', 'lpad', 'mpad']);
+
+/**
+ * Resolve the Pad Background UI (a mode selector + an optional color string) into the
+ * raw `b_` suffix `resizeComponents` expects, shared by the standalone Resize op and
+ * the Multi-Step resize step so they stay in sync. Returns '' for the default (black)
+ * padding, which emits no `b_` qualifier. A hex value (with or without a leading `#`)
+ * is encoded as `rgb:RRGGBB`; a named color (`white`, `lightblue`) passes through.
+ */
+export const padBackgroundSuffix = (mode: string, color: string): string => {
+	if (mode === 'auto') return 'auto';
+	if (mode === 'blurred') return 'blurred';
+	if (mode === 'color') {
+		const value = color.trim().replace(/^#/, '');
+		if (!value) return '';
+		return /^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/.test(value) ? `rgb:${value}` : value;
+	}
+	return '';
 };
 
 /**

@@ -103,6 +103,72 @@ describe('transform:resizeImage', () => {
 		expect(out.transformation).toBe('c_limit,w_800');
 	});
 
+	it('emits a pad mode verbatim (letterbox to a shape)', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'sample', resizeWidth: 400, resizeHeight: 300, resizeFit: 'pad' },
+		});
+		const [out] = await resizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_pad,w_400,h_300');
+	});
+
+	it('prefixes b_auto for a pad mode with auto background', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				resizeWidth: 400,
+				resizeHeight: 300,
+				resizeFit: 'pad',
+				resizePadBackground: 'auto',
+			},
+		});
+		const [out] = await resizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_auto,c_pad,w_400,h_300');
+	});
+
+	it('encodes a hex pad background as b_rgb: and drops the leading #', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				resizeWidth: 400,
+				resizeHeight: 300,
+				resizeFit: 'lpad',
+				resizePadBackground: 'color',
+				resizePadBackgroundColor: '#ffffff',
+			},
+		});
+		const [out] = await resizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_rgb:ffffff,c_lpad,w_400,h_300');
+	});
+
+	it('passes a named pad background color through without rgb:', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				resizeWidth: 400,
+				resizeHeight: 300,
+				resizeFit: 'pad',
+				resizePadBackground: 'color',
+				resizePadBackgroundColor: 'lightblue',
+			},
+		});
+		const [out] = await resizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_lightblue,c_pad,w_400,h_300');
+	});
+
+	it('ignores a pad background for a non-pad fit mode', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				resizeWidth: 400,
+				resizeHeight: 300,
+				resizeFit: 'fit',
+				resizePadBackground: 'auto',
+			},
+		});
+		const [out] = await resizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_fit,w_400,h_300');
+	});
+
 	it('throws when neither width nor height is given', async () => {
 		const { ctx } = makeCtx({ params: { transformPublicId: 'sample' } });
 		await expect(resizeImage(ctx, 0, testCreds)).rejects.toThrow(/width and\/or a height/);
@@ -468,6 +534,29 @@ describe('transform:multiStep', () => {
 		expect(out.transformation).toBe('c_limit,w_800/f_webp');
 		expect(out.format).toBe('webp');
 		expect(out.secure_url).toBe(`${HOST}/image/upload/c_limit,w_800/f_webp/sample.webp`);
+	});
+
+	it('resize step threads a pad background through to b_', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				multiStepResourceType: 'image',
+				transformSteps: {
+					step: [
+						{
+							stepType: 'resize',
+							width: 400,
+							height: 300,
+							fit: 'pad',
+							padBackground: 'color',
+							padBackgroundColor: '#777',
+						},
+					],
+				},
+			},
+		});
+		const [out] = await multiStep(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_rgb:777,c_pad,w_400,h_300');
 	});
 
 	it('crop by dimensions emits c_fill,g_<focus>,w_,h_', async () => {

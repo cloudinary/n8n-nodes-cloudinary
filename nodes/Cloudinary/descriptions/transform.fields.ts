@@ -123,15 +123,58 @@ export const transformFields: INodeProperties[] = [
 		displayName: 'Fit',
 		name: 'resizeFit',
 		type: 'options',
+		// Ordered by how aggressively each mode changes the image (never-upscale →
+		// may-enlarge → pad family → exact), not alphabetically, so the dropdown reads
+		// as a gradient with the safe default (Limit) first and the pad modes grouped.
+		// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 		options: [
 			{ name: 'Limit (Never Upscale)', value: 'limit', description: 'Resize down to fit within the dimensions; never enlarges' },
 			{ name: 'Fit (Fit Within)', value: 'fit', description: 'Fit within the dimensions, may enlarge, keeps full image' },
+			{ name: 'Pad (Letterbox)', value: 'pad', description: 'Fit within the dimensions, then pad to fill the rest; keeps full image' },
+			{ name: 'Pad - Limit (Never Upscale)', value: 'lpad', description: 'Like Pad, but never enlarges past the original size' },
+			{ name: 'Pad - Minimum', value: 'mpad', description: 'Like Pad, but only pads when the target is larger than the original; never scales the image' },
 			{ name: 'Scale (Exact)', value: 'scale', description: 'Force exact dimensions; may distort if both are set' },
 		],
 		default: 'limit',
-		description: 'How the image is fitted to the requested dimensions. Note: Resize does not auto-optimize — chain "Image: Optimize" after it, or use "Compose: Combine Transformations", to add f_auto/q_auto.',
+		description: 'How the image is fitted to the requested dimensions. Pad modes keep the whole image and fill the surrounding space (set both width and height to define the padded shape). Note: Resize does not auto-optimize — chain "Image: Optimize" after it, or use "Compose: Combine Transformations", to add f_auto/q_auto.',
 		displayOptions: {
 			show: { resource: ['transform'], operation: ['resizeImage'] },
+		},
+	},
+	{
+		displayName: 'Pad Background',
+		name: 'resizePadBackground',
+		type: 'options',
+		options: [
+			{ name: 'Black (Default)', value: '', description: 'Cloudinary\'s default — pad with black' },
+			{ name: 'Auto (Predominant Color)', value: 'auto', description: 'Pad with a color sampled from the image (b_auto)' },
+			{ name: 'Blurred', value: 'blurred', description: 'Pad with a blurred, enlarged copy of the image (b_blurred)' },
+			{ name: 'Solid Color', value: 'color', description: 'Pad with a specific color set below' },
+		],
+		default: '',
+		description: 'Color to fill the padded area. Applies only to the Pad fit modes.',
+		displayOptions: {
+			show: {
+				resource: ['transform'],
+				operation: ['resizeImage'],
+				resizeFit: ['pad', 'lpad', 'mpad'],
+			},
+		},
+	},
+	{
+		displayName: 'Background Color',
+		name: 'resizePadBackgroundColor',
+		type: 'color',
+		default: '',
+		placeholder: '#ffffff or white',
+		description: 'A named color (e.g. white, lightblue) or a hex value (e.g. #ffffff). Hex is encoded as b_rgb:.',
+		displayOptions: {
+			show: {
+				resource: ['transform'],
+				operation: ['resizeImage'],
+				resizeFit: ['pad', 'lpad', 'mpad'],
+				resizePadBackground: ['color'],
+			},
 		},
 	},
 
@@ -487,6 +530,17 @@ export const transformFields: INodeProperties[] = [
 						},
 					},
 					{
+						displayName: 'Background Color',
+						name: 'padBackgroundColor',
+						type: 'color',
+						default: '',
+						placeholder: '#ffffff or white',
+						description: 'A named color (e.g. white) or a hex value (e.g. #ffffff). Hex is encoded as b_rgb:.',
+						displayOptions: {
+							show: { stepType: ['resize'], fit: ['pad', 'lpad', 'mpad'], padBackground: ['color'] },
+						},
+					},
+					{
 						displayName: 'Component',
 						name: 'raw',
 						type: 'string',
@@ -542,6 +596,8 @@ export const transformFields: INodeProperties[] = [
 						displayName: 'Fit',
 						name: 'fit',
 						type: 'options',
+						// Same intent-ordering as the standalone Resize Fit field above; keep in sync.
+						// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 						options: [
 							{
 								name: 'Limit (Never Upscale)',
@@ -552,12 +608,24 @@ export const transformFields: INodeProperties[] = [
 								value: 'fit',
 							},
 							{
+								name: 'Pad (Letterbox)',
+								value: 'pad',
+							},
+							{
+								name: 'Pad - Limit (Never Upscale)',
+								value: 'lpad',
+							},
+							{
+								name: 'Pad - Minimum',
+								value: 'mpad',
+							},
+							{
 								name: 'Scale (Exact)',
 								value: 'scale',
 							},
 					],
 						default: 'limit',
-						description: 'How the asset is fitted to the requested dimensions',
+						description: 'How the asset is fitted to the requested dimensions. Pad modes keep the whole asset and fill the surrounding space (set both width and height).',
 						displayOptions: {
 							show: { stepType: ['resize'] },
 						},
@@ -604,6 +672,22 @@ export const transformFields: INodeProperties[] = [
 						description: 'Target height in pixels',
 						displayOptions: {
 							show: { stepType: ['crop'], cropMode: ['dimensions'] },
+						},
+					},
+					{
+						displayName: 'Pad Background',
+						name: 'padBackground',
+						type: 'options',
+						options: [
+							{ name: 'Black (Default)', value: '' },
+							{ name: 'Auto (Predominant Color)', value: 'auto' },
+							{ name: 'Blurred', value: 'blurred' },
+							{ name: 'Solid Color', value: 'color' },
+						],
+						default: '',
+						description: 'Color to fill the padded area. Applies only to the Pad fit modes.',
+						displayOptions: {
+							show: { stepType: ['resize'], fit: ['pad', 'lpad', 'mpad'] },
 						},
 					},
 					{
