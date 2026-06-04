@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import type { IDataObject } from 'n8n-workflow';
 import { optimizeImage } from './optimizeImage';
-import { resizeImage } from './resizeImage';
-import { cropImage } from './cropImage';
+import { resizeImage, resizeVideo } from './resizeImage';
+import { cropImage, cropVideo } from './cropImage';
 import { convertImage } from './convertImage';
 import { optimizeVideo } from './optimizeVideo';
 import { trimVideo } from './trimVideo';
@@ -234,6 +234,75 @@ describe('transform:cropImage', () => {
 	it('throws when dimensions mode has no dimensions', async () => {
 		const { ctx } = makeCtx({ params: { transformPublicId: 'sample' } });
 		await expect(cropImage(ctx, 0, testCreds)).rejects.toThrow(/width and\/or a height/);
+	});
+});
+
+describe('transform:resizeVideo', () => {
+	it('emits the same c_<fit>,w_,h_ component on the video/upload path', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'clip', resizeWidth: 640, resizeHeight: 360, resizeFit: 'fit' },
+		});
+		const [out] = await resizeVideo(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_fit,w_640,h_360');
+		expect(out.resource_type).toBe('video');
+		expect(out.secure_url).toBe(`${HOST}/video/upload/c_fit,w_640,h_360/clip`);
+	});
+
+	it('threads a pad background through to b_ for video', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'clip',
+				resizeWidth: 1080,
+				resizeHeight: 1920,
+				resizeFit: 'pad',
+				resizePadBackground: 'blurred',
+			},
+		});
+		const [out] = await resizeVideo(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_blurred,c_pad,w_1080,h_1920');
+	});
+
+	it('throws when neither width nor height is given', async () => {
+		const { ctx } = makeCtx({ params: { transformPublicId: 'clip' } });
+		await expect(resizeVideo(ctx, 0, testCreds)).rejects.toThrow(/width and\/or a height/);
+	});
+});
+
+describe('transform:cropVideo', () => {
+	it('emits c_fill,g_<focus>,w_,h_ on the video/upload path', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'clip', cropWidth: 640, cropHeight: 640, cropFocus: 'auto' },
+		});
+		const [out] = await cropVideo(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_fill,g_auto,w_640,h_640');
+		expect(out.resource_type).toBe('video');
+		expect(out.secure_url).toBe(`${HOST}/video/upload/c_fill,g_auto,w_640,h_640/clip`);
+	});
+
+	it('crops a video to an aspect ratio', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'clip',
+				cropBy: 'aspectRatio',
+				cropAspectRatio: '9:16',
+				cropAspectWidth: 720,
+			},
+		});
+		const [out] = await cropVideo(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_fill,g_auto,ar_9:16,w_720');
+	});
+
+	// Generative Fill is image-only — the video op does not declare those fields, so they
+	// are never set on a video crop. With them absent the handler reads the false/''
+	// defaults and emits a plain c_fill crop (no b_gen_fill). The field-gating itself
+	// lives in transform.fields.ts (operation: ['cropImage'] only); this asserts the
+	// handler's default-path behaviour that gating relies on.
+	it('emits a plain c_fill crop when generative-fill params are absent', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'clip', cropWidth: 640, cropHeight: 640 },
+		});
+		const [out] = await cropVideo(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_fill,g_auto,w_640,h_640');
 	});
 });
 

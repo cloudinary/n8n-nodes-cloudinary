@@ -11,8 +11,8 @@ import { search } from './admin/search';
 import { getTags } from './admin/getTags';
 import { getMetadataFields } from './admin/getMetadataFields';
 import { optimizeImage } from './transform/optimizeImage';
-import { resizeImage } from './transform/resizeImage';
-import { cropImage } from './transform/cropImage';
+import { resizeImage, resizeVideo } from './transform/resizeImage';
+import { cropImage, cropVideo } from './transform/cropImage';
 import { convertImage } from './transform/convertImage';
 import { optimizeVideo } from './transform/optimizeVideo';
 import { trimVideo } from './transform/trimVideo';
@@ -42,6 +42,8 @@ export const operationHandlers: Record<string, OperationHandler> = {
 	'transform:cropImage': cropImage,
 	'transform:convertImage': convertImage,
 	'transform:optimizeVideo': optimizeVideo,
+	'transform:resizeVideo': resizeVideo,
+	'transform:cropVideo': cropVideo,
 	'transform:trimVideo': trimVideo,
 	'transform:videoThumbnail': videoThumbnail,
 	'transform:customTransformation': customTransformation,

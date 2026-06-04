@@ -124,10 +124,22 @@ export const resourceProperties: INodeProperties[] = [
 				action: 'Image: Resize',
 			},
 			{
+				name: 'Video: Crop',
+				value: 'cropVideo',
+				description: 'Build a delivery URL that crops a video to fixed dimensions or an aspect ratio. Outputs secure_url and a reusable transformation string.',
+				action: 'Video: Crop',
+			},
+			{
 				name: 'Video: Optimize',
 				value: 'optimizeVideo',
 				description: 'Build a delivery URL that auto-optimizes a video (format/codec + quality). Outputs secure_url and a reusable transformation string.',
 				action: 'Video: Optimize',
+			},
+			{
+				name: 'Video: Resize',
+				value: 'resizeVideo',
+				description: 'Build a delivery URL that resizes a video to a width and/or height. Outputs secure_url and a reusable transformation string.',
+				action: 'Video: Resize',
 			},
 			{
 				name: 'Video: Thumbnail',

@@ -16,6 +16,8 @@ const ALL_TRANSFORM_OPS = [
 	'cropImage',
 	'convertImage',
 	'optimizeVideo',
+	'resizeVideo',
+	'cropVideo',
 	'trimVideo',
 	'videoThumbnail',
 	'customTransformation',
@@ -68,7 +70,7 @@ export const transformFields: INodeProperties[] = [
 			{ name: 'Private', value: 'private' },
 			{ name: 'Twitter (by ID)', value: 'twitter' },
 			{ name: 'Twitter (by Name)', value: 'twitter_name' },
-			{ name: 'Upload (Public)', value: 'upload' },
+			{ name: 'Upload', value: 'upload' },
 			{ name: 'Vimeo', value: 'vimeo' },
 			{ name: 'WorldStarHipHop', value: 'worldstarhiphop' },
 			{ name: 'YouTube', value: 'youtube' },
@@ -96,7 +98,10 @@ export const transformFields: INodeProperties[] = [
 		},
 	},
 
-	// ── Resize Image ─────────────────────────────────────────────────────────
+	// ── Resize Image / Video ───────────────────────────────────────────────────
+	// One field set, shared by the image (`resizeImage`) and video (`resizeVideo`) ops:
+	// the fit modes and pad backgrounds are identical for both media types, so the
+	// fields are gated on both operations rather than duplicated.
 	{
 		displayName: 'Width',
 		name: 'resizeWidth',
@@ -105,7 +110,7 @@ export const transformFields: INodeProperties[] = [
 		typeOptions: { minValue: 0 },
 		description: 'Target width in pixels. Leave 0 to size by height only.',
 		displayOptions: {
-			show: { resource: ['transform'], operation: ['resizeImage'] },
+			show: { resource: ['transform'], operation: ['resizeImage', 'resizeVideo'] },
 		},
 	},
 	{
@@ -116,7 +121,7 @@ export const transformFields: INodeProperties[] = [
 		typeOptions: { minValue: 0 },
 		description: 'Target height in pixels. Leave 0 to size by width only.',
 		displayOptions: {
-			show: { resource: ['transform'], operation: ['resizeImage'] },
+			show: { resource: ['transform'], operation: ['resizeImage', 'resizeVideo'] },
 		},
 	},
 	{
@@ -136,9 +141,9 @@ export const transformFields: INodeProperties[] = [
 			{ name: 'Scale (Exact)', value: 'scale', description: 'Force exact dimensions; may distort if both are set' },
 		],
 		default: 'limit',
-		description: 'How the image is fitted to the requested dimensions. Pad modes keep the whole image and fill the surrounding space (set both width and height to define the padded shape). Note: Resize does not auto-optimize — chain "Image: Optimize" after it, or use "Compose: Combine Transformations", to add f_auto/q_auto.',
+		description: 'How the asset is fitted to the requested dimensions. Pad modes keep the whole asset and fill the surrounding space (set both width and height to define the padded shape). Note: Resize does not auto-optimize — chain "Image: Optimize" / "Video: Optimize" after it, or use "Compose: Combine Transformations", to add f_auto/q_auto.',
 		displayOptions: {
-			show: { resource: ['transform'], operation: ['resizeImage'] },
+			show: { resource: ['transform'], operation: ['resizeImage', 'resizeVideo'] },
 		},
 	},
 	{
@@ -147,8 +152,8 @@ export const transformFields: INodeProperties[] = [
 		type: 'options',
 		options: [
 			{ name: 'Black (Default)', value: '', description: 'Cloudinary\'s default — pad with black' },
-			{ name: 'Auto (Predominant Color)', value: 'auto', description: 'Pad with a color sampled from the image (b_auto)' },
-			{ name: 'Blurred', value: 'blurred', description: 'Pad with a blurred, enlarged copy of the image (b_blurred)' },
+			{ name: 'Auto (Predominant Color)', value: 'auto', description: 'Pad with a color sampled from the asset (b_auto)' },
+			{ name: 'Blurred', value: 'blurred', description: 'Pad with a blurred, enlarged copy of the asset (b_blurred)' },
 			{ name: 'Solid Color', value: 'color', description: 'Pad with a specific color set below' },
 		],
 		default: '',
@@ -156,7 +161,7 @@ export const transformFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['transform'],
-				operation: ['resizeImage'],
+				operation: ['resizeImage', 'resizeVideo'],
 				resizeFit: ['pad', 'lpad', 'mpad'],
 			},
 		},
@@ -171,14 +176,18 @@ export const transformFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['transform'],
-				operation: ['resizeImage'],
+				operation: ['resizeImage', 'resizeVideo'],
 				resizeFit: ['pad', 'lpad', 'mpad'],
 				resizePadBackground: ['color'],
 			},
 		},
 	},
 
-	// ── Crop Image ───────────────────────────────────────────────────────────
+	// ── Crop Image / Video ─────────────────────────────────────────────────────
+	// Shared by the image (`cropImage`) and video (`cropVideo`) ops: dimensions, aspect
+	// ratio, and focus (g_auto/g_face/g_center) apply to both. Only Generative Fill (and
+	// its prompt) below stay image-only — they are gated on `cropImage` alone, so the
+	// video op never surfaces them and the crop handler's gen-fill branch never fires.
 	{
 		displayName: 'Crop By',
 		name: 'cropBy',
@@ -189,7 +198,7 @@ export const transformFields: INodeProperties[] = [
 		],
 		default: 'dimensions',
 		displayOptions: {
-			show: { resource: ['transform'], operation: ['cropImage'] },
+			show: { resource: ['transform'], operation: ['cropImage', 'cropVideo'] },
 		},
 	},
 	{
@@ -200,7 +209,7 @@ export const transformFields: INodeProperties[] = [
 		typeOptions: { minValue: 0 },
 		description: 'Target width in pixels',
 		displayOptions: {
-			show: { resource: ['transform'], operation: ['cropImage'], cropBy: ['dimensions'] },
+			show: { resource: ['transform'], operation: ['cropImage', 'cropVideo'], cropBy: ['dimensions'] },
 		},
 	},
 	{
@@ -211,7 +220,7 @@ export const transformFields: INodeProperties[] = [
 		typeOptions: { minValue: 0 },
 		description: 'Target height in pixels',
 		displayOptions: {
-			show: { resource: ['transform'], operation: ['cropImage'], cropBy: ['dimensions'] },
+			show: { resource: ['transform'], operation: ['cropImage', 'cropVideo'], cropBy: ['dimensions'] },
 		},
 	},
 	{
@@ -222,7 +231,7 @@ export const transformFields: INodeProperties[] = [
 		placeholder: '16:9',
 		description: 'Aspect ratio as width:height (e.g. 16:9) or a decimal (e.g. 1.5).',
 		displayOptions: {
-			show: { resource: ['transform'], operation: ['cropImage'], cropBy: ['aspectRatio'] },
+			show: { resource: ['transform'], operation: ['cropImage', 'cropVideo'], cropBy: ['aspectRatio'] },
 		},
 	},
 	{
@@ -233,7 +242,7 @@ export const transformFields: INodeProperties[] = [
 		typeOptions: { minValue: 0 },
 		description: 'Optional target width in pixels; height is derived from the aspect ratio',
 		displayOptions: {
-			show: { resource: ['transform'], operation: ['cropImage'], cropBy: ['aspectRatio'] },
+			show: { resource: ['transform'], operation: ['cropImage', 'cropVideo'], cropBy: ['aspectRatio'] },
 		},
 	},
 	{
@@ -243,12 +252,12 @@ export const transformFields: INodeProperties[] = [
 		options: [
 			{ name: 'Auto (Smart)', value: 'auto', description: 'Automatically detect the most important region' },
 			{ name: 'Face', value: 'face', description: 'Center the crop on a detected face' },
-			{ name: 'Center', value: 'center', description: 'Center the crop on the middle of the image' },
+			{ name: 'Center', value: 'center', description: 'Center the crop on the middle of the asset' },
 		],
 		default: 'auto',
-		description: 'Which part of the image to keep in focus when cropping. Note: Crop does not auto-optimize — chain "Image: Optimize" after it, or use "Compose: Combine Transformations", to add f_auto/q_auto.',
+		description: 'Which part of the asset to keep in focus when cropping. Note: Crop does not auto-optimize — chain "Image: Optimize" / "Video: Optimize" after it, or use "Compose: Combine Transformations", to add f_auto/q_auto.',
 		displayOptions: {
-			show: { resource: ['transform'], operation: ['cropImage'] },
+			show: { resource: ['transform'], operation: ['cropImage', 'cropVideo'] },
 		},
 	},
 	{

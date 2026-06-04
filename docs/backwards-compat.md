@@ -2,6 +2,8 @@
 
 n8n persists each saved workflow as JSON. That JSON references this node — and many things *inside* this node — by string identifier. Anything it references by string is a public API; anything it uses to interpret missing or stored values is part of the same contract. Both can only evolve **additively**, or behind an explicit `typeVersion` bump.
 
+**The contract is what's on `master`, not what's in your working tree.** A saved workflow can only reference identifiers that have actually shipped, so the frozen surface is whatever the `master` branch defines — *not* whatever exists on your current feature branch. Identifiers introduced on an unreleased branch (a new resource, operation, field `name`, or option `value` that `git show master:<file>` does not contain) are still drafts: rename, restructure, or drop them freely. Only once they merge to `master` do they become frozen. When in doubt about whether something is contract, diff it against `master` (`git log master..HEAD`, `git show master:<file>`) rather than reasoning from the working tree — on a long feature branch it's easy to mistake your own in-progress naming for an established contract. The rules below apply to identifiers **already on `master`**.
+
 **Frozen-by-string** — renaming or removing orphans every saved workflow that references it:
 - Node `type` (`n8n-nodes-cloudinary.cloudinary`) — class export and top-level `name`.
 - Credential `name` (`cloudinaryApi`, exposed via `CREDENTIAL_TYPE`).
