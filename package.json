@@ -32,7 +32,8 @@
     "prepublishOnly": "npm run build && npm run lint -c .eslintrc.prepublish.js nodes credentials package.json",
     "n8n-validate": "npx @n8n/scan-community-package n8n-nodes-cloudinary",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "compat-check": "bash docs/compat-check/run.sh"
   },
   "files": [
     "dist"

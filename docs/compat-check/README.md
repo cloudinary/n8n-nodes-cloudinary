@@ -38,8 +38,10 @@ Exit code is non-zero if any breaking change is found, so it can gate CI.
 From the repo root:
 
 ```bash
-bash docs/compat-check/run.sh
+npm run compat-check   # alias for: bash docs/compat-check/run.sh
 ```
+
+This also runs in CI as a required PR gate — see the **Backward-compat contract check** step in [`.github/workflows/pr-check.yml`](../../.github/workflows/pr-check.yml). That checkout uses `fetch-depth: 0` so the baseline commit's history is available for the worktree build.
 
 `run.sh` does the whole thing hermetically:
 - creates a git worktree at the baseline commit (`fbdfa17`) under a temp dir,
