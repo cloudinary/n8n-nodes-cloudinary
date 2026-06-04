@@ -160,7 +160,7 @@ export const resourceProperties: INodeProperties[] = [
 				name: 'Video Player',
 				value: 'videoPlayer',
 				description: 'Generate embed code and config for the Cloudinary Video Player. Outputs embed_url and a player_config JSON string.',
-				action: 'Generate a video player embed',
+				action: 'Generate a video player',
 			},
 		],
 		default: 'videoPlayer',
