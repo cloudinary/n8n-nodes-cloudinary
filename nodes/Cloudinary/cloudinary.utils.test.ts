@@ -14,6 +14,7 @@ import {
 	joinTransformation,
 	splitCsvIds,
 } from './cloudinary.utils';
+import { sha256 } from './sha256.utils';
 
 describe('buildSearchExpression', () => {
 	it('returns input unchanged when all three resource types are selected', () => {
@@ -206,6 +207,53 @@ describe('generateCloudinarySignature', () => {
 	it('produces a 64-char hex SHA-256 digest', () => {
 		const sig = generateCloudinarySignature({ timestamp: 1, public_id: 'x' }, 'secret');
 		expect(sig).toMatch(/^[a-f0-9]{64}$/);
+	});
+
+	it('excludes cloud_name and resource_type from the signed payload', () => {
+		const withExcluded = generateCloudinarySignature(
+			{ timestamp: 1234567890, public_id: 'sample', resource_type: 'image', cloud_name: 'demo' },
+			'secret',
+		);
+		const withoutExcluded = generateCloudinarySignature(
+			{ timestamp: 1234567890, public_id: 'sample' },
+			'secret',
+		);
+		expect(withExcluded).toBe(withoutExcluded);
+	});
+
+	it('omits empty-valued parameters so the signature matches the server (empty string, null, undefined)', () => {
+		// Cloudinary drops empty params before signing; a blank `metadata` (e.g. from
+		// an empty `{}` object) must not change the signature.
+		const withEmpties = generateCloudinarySignature(
+			{ timestamp: 1234567890, public_id: 'sample', metadata: '', context: null, transformation: undefined },
+			'secret',
+		);
+		const withoutEmpties = generateCloudinarySignature(
+			{ timestamp: 1234567890, public_id: 'sample' },
+			'secret',
+		);
+		expect(withEmpties).toBe(withoutEmpties);
+	});
+
+	it('signs the exact string the server expects for the legacy upload-from-URL params', () => {
+		// Regression for the 0.0.9 fixture: folder + public_id + tags + timestamp,
+		// with a blank metadata field that must be dropped from the signature.
+		const sig = generateCloudinarySignature(
+			{
+				timestamp: 1780563540,
+				api_key: 'KEY',
+				file: 'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+				folder: 'compat-test',
+				public_id: 'compat_sample',
+				metadata: '',
+				tags: 'compat,legacy,upgrade-test',
+			},
+			'secret',
+		);
+		const expected = sha256(
+			'folder=compat-test&public_id=compat_sample&tags=compat,legacy,upgrade-test&timestamp=1780563540secret',
+		);
+		expect(sig).toBe(expected);
 	});
 });
 

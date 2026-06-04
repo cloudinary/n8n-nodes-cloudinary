@@ -221,11 +221,19 @@ export const metadataToPipeString = (input: IDataObject | string): string => {
  * Generate Cloudinary signature for signed uploads
  */
 export const generateCloudinarySignature = (params: IDataObject, apiSecret: string): string => {
-	// Remove signature, api_key, and file from params for signature generation
-	const { signature, api_key, file, ...paramsToSign } = params;
+	// Remove params that are never part of the string to sign (file, cloud_name,
+	// resource_type, and api_key — plus any pre-existing signature).
+	const { signature, api_key, file, resource_type, cloud_name, ...paramsToSign } = params;
 
-	// Sort parameters alphabetically and create query string
+	// Sort parameters alphabetically and create the query string. Cloudinary omits
+	// parameters with empty values from the string to sign it computes server-side,
+	// so we must drop them too — otherwise a blank field (e.g. an empty `metadata`)
+	// gets included here but not there, and the signatures will not match.
 	const sortedParams = Object.keys(paramsToSign)
+		.filter((key) => {
+			const value = paramsToSign[key];
+			return value !== undefined && value !== null && value !== '';
+		})
 		.sort()
 		.map((key) => `${key}=${paramsToSign[key]}`)
 		.join('&');
