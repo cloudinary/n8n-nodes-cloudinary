@@ -27,7 +27,7 @@ Open http://localhost:5678, add a **Cloudinary** node, and build one workflow pe
 - **Update Asset → Update Metadata**
 - **Admin → Get Tags** and **Get Metadata Fields**
 
-Configure real values, **execute each once** to confirm it works, then **Download** each workflow to JSON (⋯ menu → Download). Save them under `docs/compat-check/fixtures/` (gitignore real credentials — export with credentials *omitted*, n8n does this by default).
+Configure real values, **execute each once** to confirm it works, then **Download** each workflow to JSON (⋯ menu → Download). Save them under `docs/backward-compatibility-check/fixtures/` (gitignore real credentials — export with credentials *omitted*, n8n does this by default).
 
 Stop n8n (Ctrl-C).
 

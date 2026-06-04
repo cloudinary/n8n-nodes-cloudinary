@@ -33,7 +33,7 @@
     "n8n-validate": "npx @n8n/scan-community-package n8n-nodes-cloudinary",
     "test": "vitest run",
     "test:watch": "vitest",
-    "compat-check": "bash docs/compat-check/run.sh"
+    "backward-compatibility-check": "bash docs/backward-compatibility-check/run.sh"
   },
   "files": [
     "dist"

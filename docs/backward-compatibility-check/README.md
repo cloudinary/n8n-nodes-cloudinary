@@ -19,7 +19,7 @@ Because the descriptor `version` did **not** change while the entire operation/p
 
 ## The automated check
 
-Two scripts under `docs/compat-check/`:
+Two scripts under `docs/backward-compatibility-check/`:
 
 1. **`extract-contract.cjs`** — instantiates the compiled node (`new Cloudinary().description`) and walks `properties` recursively (into `collection` / `fixedCollection` children) to emit a normalized JSON snapshot of the contract: every parameter `name`+`type`+`default`+`displayOptions`, and every `options[].value`. Run against the built `dist/` of any checkout.
 2. **`diff-contract.cjs`** — loads two snapshots (baseline, candidate) and reports **breaking changes** by the rules in `backwards-compat.md`:
@@ -38,7 +38,7 @@ Exit code is non-zero if any breaking change is found, so it can gate CI.
 From the repo root:
 
 ```bash
-npm run compat-check   # alias for: bash docs/compat-check/run.sh
+npm run backward-compatibility-check   # alias for: bash docs/backward-compatibility-check/run.sh
 ```
 
 This also runs in CI as a required PR gate — see the **Backward-compat contract check** step in [`.github/workflows/pr-check.yml`](../../.github/workflows/pr-check.yml). That checkout uses `fetch-depth: 0` so the baseline commit's history is available for the worktree build.
@@ -51,7 +51,7 @@ This also runs in CI as a required PR gate — see the **Backward-compat contrac
 - diffs them and prints a verdict,
 - cleans up the worktree.
 
-The verdict is also written to **`.local/compat-check-findings.md`** (with the two contract snapshots beside it as `.local/{baseline,candidate}.snapshot.json`). `.local/` is gitignored — these are regenerable, point-in-time artifacts tied to a specific baseline/candidate pair, so they are deliberately **not** committed. Re-run `run.sh` to refresh them; don't hand-edit.
+The verdict is also written to **`.local/backward-compatibility-check-findings.md`** (with the two contract snapshots beside it as `.local/{baseline,candidate}.snapshot.json`). `.local/` is gitignored — these are regenerable, point-in-time artifacts tied to a specific baseline/candidate pair, so they are deliberately **not** committed. Re-run `run.sh` to refresh them; don't hand-edit.
 
 To run the pieces manually (e.g. against an arbitrary ref):
 
@@ -59,14 +59,14 @@ To run the pieces manually (e.g. against an arbitrary ref):
 # baseline snapshot
 git worktree add /tmp/cld-base fbdfa17
 ( cd /tmp/cld-base && npm ci && npm run build )
-node docs/compat-check/extract-contract.cjs /tmp/cld-base/dist > /tmp/base.json
+node docs/backward-compatibility-check/extract-contract.cjs /tmp/cld-base/dist > /tmp/base.json
 
 # candidate snapshot (current branch, already built)
 npm run build
-node docs/compat-check/extract-contract.cjs ./dist > /tmp/cand.json
+node docs/backward-compatibility-check/extract-contract.cjs ./dist > /tmp/cand.json
 
 # diff
-node docs/compat-check/diff-contract.cjs /tmp/base.json /tmp/cand.json
+node docs/backward-compatibility-check/diff-contract.cjs /tmp/base.json /tmp/cand.json
 
 git worktree remove /tmp/cld-base --force
 ```
