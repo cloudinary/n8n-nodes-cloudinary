@@ -54,10 +54,11 @@ Real edits usually need several transformations applied in sequence ("first crop
 
 ### Video Player (Widget)
 
-The *Widget → Video Player* operation builds a [Cloudinary Video Player](https://cloudinary.com/documentation/video_player_quickstart_guide) embed URL plus a player config. Its **Transformation** field applies to the **played video stream** (it accepts the same `transformation` string the Transform ops emit, so you can wire `{{ $json.transformation }}` here too). Two constraints worth knowing:
+The *Widget → Video Player* operation builds a [Cloudinary Video Player](https://cloudinary.com/documentation/video_player_quickstart_guide) embed URL plus a player config. Its **Transformation** field applies to the **played video stream** (it accepts the same `transformation` string the Transform ops emit, so you can wire `{{ $json.transformation }}` here too). A few constraints worth knowing:
 
 - **Use video-capable transforms.** Image-only effects (e.g. `e_grayscale`) are silently ignored on video and have no visible effect. See [video effects](https://cloudinary.com/documentation/video_effects_and_enhancements).
 - **Adaptive streaming vs. format selection.** If you select an adaptive-streaming **Source Type** (HLS or MPEG-DASH), the transformation must **not** pin a delivery format (an `f_` component such as `f_auto:video`, which an *Optimize* step adds). The two are incompatible — Cloudinary can't apply a streaming profile to a fixed non-streaming format. The node detects this and fails with a clear message; for adaptive streaming, keep the transformation to resize/crop/trim only.
+- **Aspect Ratio crops on top of your Transformation.** Setting an **Aspect Ratio** makes the player re-crop the video to those proportions using the **Crop Mode** field (*Smart*, *Fill*, or *Pad* — default *Smart*). With the default *Smart* mode, that re-crop can't be combined with a Transformation that already crops the video, and the player rejects it. The node fails fast with a clear message; to render either set *Crop Mode* to *Fill* or *Pad*, or clear *Aspect Ratio* and let your Transformation define the framing.
 
 ## Supported authentication methods
 

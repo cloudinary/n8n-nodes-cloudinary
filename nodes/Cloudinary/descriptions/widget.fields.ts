@@ -128,6 +128,21 @@ export const widgetFields: INodeProperties[] = [
 		},
 	},
 	{
+		displayName: 'Crop Mode',
+		name: 'playerCropMode',
+		type: 'options',
+		options: [
+			{ name: 'Smart', value: 'smart', description: 'Keep the most important content in view (player default)' },
+			{ name: 'Fill', value: 'fill', description: 'Cover the frame, cropping as needed' },
+			{ name: 'Pad', value: 'pad', description: 'Fit the whole video within the frame and add padding' },
+		],
+		default: 'smart',
+		description: 'How the player resizes the video to the chosen Aspect Ratio. Only relevant when Aspect Ratio is set (applies to progressive delivery, not adaptive streaming). If your Transformation already crops the video to a shape, applying an Aspect Ratio here crops it a second time — leave Aspect Ratio unset to keep just your transformation\'s framing. See https://cloudinary.com/documentation/video_player_customization.',
+		displayOptions: {
+			show: { resource: ['widget'], operation: ['videoPlayer'], playerAspectRatio: ['1:1', '16:9', '9:16'] },
+		},
+	},
+	{
 		displayName: 'Skin',
 		name: 'playerSkin',
 		type: 'options',

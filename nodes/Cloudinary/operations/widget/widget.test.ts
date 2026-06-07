@@ -160,6 +160,77 @@ describe('widget:videoPlayer', () => {
 		expect(out.embed_url).toContain('player[aspectRatio]=9%3A16');
 	});
 
+	it('throws when an aspect ratio + default smart crop is combined with a transformation', async () => {
+		// The player merges its smart-crop gravity into the source transformation, which
+		// Cloudinary rejects ("g_auto must be in a transformation component by itself").
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'samples/elephants',
+				playerAspectRatio: '9:16',
+				playerTransformation: 'f_auto:video/q_auto/so_5,eo_30',
+			},
+		});
+		await expect(videoPlayer(ctx, 0, testCreds)).rejects.toThrow(/component by itself|Crop Mode/i);
+	});
+
+	it('does not throw for aspect ratio + transformation when Crop Mode is Fill', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'v',
+				playerAspectRatio: '9:16',
+				playerCropMode: 'fill',
+				playerTransformation: 'f_auto:video/q_auto/so_5,eo_30',
+			},
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain('source[cropMode]=fill');
+	});
+
+	it('does not throw for an aspect ratio with no transformation (smart crop alone is fine)', async () => {
+		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerAspectRatio: '9:16' } });
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain('player[aspectRatio]=9%3A16');
+	});
+
+	it('does not throw for a transformation with no aspect ratio', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'v', playerTransformation: 'f_auto:video/q_auto/so_5,eo_30' },
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain('source[transformation][raw_transformation]');
+	});
+
+	it('includes source[cropMode] in embed_url for a non-default mode with an aspect ratio', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'v', playerAspectRatio: '16:9', playerCropMode: 'fill' },
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain('source[cropMode]=fill');
+		const cfg = JSON.parse(out.player_config as string);
+		expect(cfg.cropMode).toBe('fill');
+	});
+
+	it('omits cropMode when it is the default smart mode', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'v', playerAspectRatio: '16:9', playerCropMode: 'smart' },
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).not.toContain('cropMode');
+		const cfg = JSON.parse(out.player_config as string);
+		expect(cfg.cropMode).toBeUndefined();
+	});
+
+	it('omits cropMode when no aspect ratio is set, even if a mode is chosen', async () => {
+		// cropMode only takes effect alongside aspectRatio, so it would be inert without one.
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'v', playerAspectRatio: '', playerCropMode: 'pad' },
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).not.toContain('cropMode');
+		const cfg = JSON.parse(out.player_config as string);
+		expect(cfg.cropMode).toBeUndefined();
+	});
+
 	it('includes width and height in embed_url', async () => {
 		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerWidth: 800, playerHeight: 450 } });
 		const [out] = await videoPlayer(ctx, 0, testCreds);

@@ -31,6 +31,7 @@ interface PlayerParams {
 	width: number;
 	height: number;
 	aspectRatio: string;
+	cropMode: string;
 	skin: string;
 	baseColor: string;
 	accentColor: string;
@@ -54,6 +55,7 @@ export const videoPlayer: OperationHandler = async (ctx, i, creds) => {
 		width: ctx.getNodeParameter('playerWidth', i, 0) as number,
 		height: ctx.getNodeParameter('playerHeight', i, 0) as number,
 		aspectRatio: ctx.getNodeParameter('playerAspectRatio', i, '') as string,
+		cropMode: ctx.getNodeParameter('playerCropMode', i, 'smart') as string,
 		skin: ctx.getNodeParameter('playerSkin', i, 'dark') as string,
 		baseColor: ctx.getNodeParameter('playerBaseColor', i, '') as string,
 		accentColor: ctx.getNodeParameter('playerAccentColor', i, '') as string,
@@ -72,6 +74,21 @@ export const videoPlayer: OperationHandler = async (ctx, i, creds) => {
 		throw new NodeOperationError(
 			ctx.getNode(),
 			`The transformation pins a delivery format (an "f_" component, e.g. f_auto:video), which is incompatible with the "${streamingType}" adaptive-streaming source type — Cloudinary rejects a streaming profile for a non-streaming format. Either remove the format selection from the transformation (e.g. drop the Optimize step) or remove "${streamingType}" from Source Types.`,
+			{ itemIndex: i },
+		);
+	}
+
+	// Fail fast on the aspect-ratio smart-crop vs source-transformation conflict. When an
+	// Aspect Ratio is set, the player merges its own crop into the source transformation
+	// (per the Video Player docs: "if you define transformations for both the source and
+	// the player, the transformation definitions get merged"). The default Smart crop adds
+	// an auto-gravity component, and the merge places it incorrectly — the player rejects it
+	// with "g_auto must be in a transformation component by itself". Fill/Pad crop without
+	// auto-gravity, so they merge cleanly; only Smart (the default) breaks.
+	if (p.aspectRatio && p.cropMode === 'smart' && p.transformation) {
+		throw new NodeOperationError(
+			ctx.getNode(),
+			`The player crops to the "${p.aspectRatio}" Aspect Ratio using the default Smart crop, and that gets merged into your Transformation in a way Cloudinary rejects ("g_auto must be in a transformation component by itself"). Either set Crop Mode to Fill or Pad (they crop without the smart gravity that conflicts), or clear the Aspect Ratio and let your Transformation define the framing.`,
 			{ itemIndex: i },
 		);
 	}
@@ -106,6 +123,12 @@ function buildEmbedUrl(cloudName: string, p: PlayerParams): string {
 	if (p.width) q.push(`player[width]=${p.width}`);
 	if (p.height) q.push(`player[height]=${p.height}`);
 	if (p.aspectRatio) q.push(`player[aspectRatio]=${enc(p.aspectRatio)}`);
+	// cropMode is a source-level option that only takes effect alongside aspectRatio, and
+	// `smart` is the player's own default — emit only when an aspect ratio is set and the
+	// user picked a non-default mode, so default URLs stay clean (cf. skin/autoplayMode).
+	if (p.aspectRatio && p.cropMode && p.cropMode !== 'smart') {
+		q.push(`source[cropMode]=${enc(p.cropMode)}`);
+	}
 	if (p.skin && p.skin !== 'dark') q.push(`player[skin]=${enc(p.skin)}`);
 	if (p.baseColor) q.push(`player[colors][base]=${enc(p.baseColor)}`);
 	if (p.accentColor) q.push(`player[colors][accent]=${enc(p.accentColor)}`);
@@ -153,6 +176,7 @@ function buildPlayerConfig(cloudName: string, p: PlayerParams): IDataObject {
 	if (p.width) cfg.width = p.width;
 	if (p.height) cfg.height = p.height;
 	if (p.aspectRatio) cfg.aspectRatio = p.aspectRatio;
+	if (p.aspectRatio && p.cropMode && p.cropMode !== 'smart') cfg.cropMode = p.cropMode;
 	if (p.skin && p.skin !== 'dark') cfg.skin = p.skin;
 
 	const colors: IDataObject = {};
