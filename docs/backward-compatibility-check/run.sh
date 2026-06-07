@@ -26,10 +26,20 @@ echo "==> candidate:    $(git rev-parse --abbrev-ref HEAD) ($(git log -1 --forma
 
 echo "==> building baseline in worktree $BASE_TREE"
 git worktree add --quiet --detach "$BASE_TREE" "$BASELINE_REF"
-# Not silenced: a failure here aborts the whole check (set -e), so the baseline
-# install/build output must be visible in CI to diagnose it — see the env line below.
-echo "    node $(node --version), npm $(npm --version)"
-( cd "$BASE_TREE" && npm ci && npm run build )
+# The baseline lockfile may pin `resolved` tarball URLs to Cloudinary's private AWS
+# CodeArtifact registry (it did at the 0.0.9 baseline fbdfa17). `npm ci` trusts those
+# hosts verbatim, so on a public CI runner with no CodeArtifact token it fails with
+# E401 — unrelated to the candidate. Rewrite any private CodeArtifact host back to the
+# public npm registry before installing; integrity hashes are host-independent, so the
+# install still verifies. We build the baseline only to extract its UI contract, so the
+# tarball source is immaterial as long as the versions match.
+if [ -f "$BASE_TREE/package-lock.json" ]; then
+	sed -i.bak -E \
+		's#https://[a-z0-9-]+\.d\.codeartifact\.[a-z0-9-]+\.amazonaws\.com/npm/[^/]+/#https://registry.npmjs.org/#g' \
+		"$BASE_TREE/package-lock.json"
+	rm -f "$BASE_TREE/package-lock.json.bak"
+fi
+( cd "$BASE_TREE" && npm ci --registry=https://registry.npmjs.org --no-audit --no-fund && npm run build )
 
 echo "==> building current checkout"
 npm run build --silent
