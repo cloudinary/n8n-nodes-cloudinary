@@ -26,7 +26,10 @@ echo "==> candidate:    $(git rev-parse --abbrev-ref HEAD) ($(git log -1 --forma
 
 echo "==> building baseline in worktree $BASE_TREE"
 git worktree add --quiet --detach "$BASE_TREE" "$BASELINE_REF"
-( cd "$BASE_TREE" && npm ci --silent && npm run build --silent )
+# Not silenced: a failure here aborts the whole check (set -e), so the baseline
+# install/build output must be visible in CI to diagnose it — see the env line below.
+echo "    node $(node --version), npm $(npm --version)"
+( cd "$BASE_TREE" && npm ci && npm run build )
 
 echo "==> building current checkout"
 npm run build --silent
