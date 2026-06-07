@@ -16,7 +16,7 @@ import { buildComponents, buildTransformResult, cropComponents, readTransformInp
 const makeCrop =
 	(resourceType: 'image' | 'video'): OperationHandler =>
 	async (ctx, i, creds) => {
-		const { publicId, deliveryType, version } = readTransformInput(ctx, i);
+		const { publicId, deliveryType, version, continueFrom } = readTransformInput(ctx, i);
 		const cropBy = ctx.getNodeParameter('cropBy', i, 'dimensions') as string;
 		const genFill = ctx.getNodeParameter('cropGenerativeFill', i, false) as boolean;
 		const focus = ctx.getNodeParameter('cropFocus', i, 'auto') as string;
@@ -43,6 +43,7 @@ const makeCrop =
 				transformation: joinTransformation(components),
 				publicId,
 				version,
+				continueFrom,
 			}),
 		];
 	};

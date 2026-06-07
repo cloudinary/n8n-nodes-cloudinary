@@ -4,7 +4,7 @@ import { buildComponents, buildTransformResult, convertComponents, readTransform
 
 /** Convert an image to another format. Emits `f_<fmt>` and delivers with `.<fmt>`. */
 export const convertImage: OperationHandler = async (ctx, i, creds) => {
-	const { publicId, deliveryType, version } = readTransformInput(ctx, i);
+	const { publicId, deliveryType, version, continueFrom } = readTransformInput(ctx, i);
 	const format = ctx.getNodeParameter('convertFormat', i, 'webp') as string;
 
 	const components = buildComponents(ctx, i, () => convertComponents(format));
@@ -17,6 +17,7 @@ export const convertImage: OperationHandler = async (ctx, i, creds) => {
 			publicId,
 			format,
 			version,
+			continueFrom,
 		}),
 	];
 };

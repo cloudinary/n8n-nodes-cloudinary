@@ -7,7 +7,7 @@ import { buildTransformResult, optimizeComponents, readTransformInput } from './
  * format and the codec for the requesting browser. Emits `f_auto:video/q_auto[:level]`.
  */
 export const optimizeVideo: OperationHandler = async (ctx, i, creds) => {
-	const { publicId, deliveryType, version } = readTransformInput(ctx, i);
+	const { publicId, deliveryType, version, continueFrom } = readTransformInput(ctx, i);
 	const quality = ctx.getNodeParameter('videoQuality', i, 'auto') as string;
 
 	const transformation = joinTransformation(optimizeComponents({ quality, resourceType: 'video' }));
@@ -19,6 +19,7 @@ export const optimizeVideo: OperationHandler = async (ctx, i, creds) => {
 			transformation,
 			publicId,
 			version,
+			continueFrom,
 		}),
 	];
 };

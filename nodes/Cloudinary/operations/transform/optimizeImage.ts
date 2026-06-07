@@ -4,7 +4,7 @@ import { buildTransformResult, optimizeComponents, readTransformInput } from './
 
 /** Optimize an image: auto-format + auto-quality. Emits `f_auto/q_auto[:level]`. */
 export const optimizeImage: OperationHandler = async (ctx, i, creds) => {
-	const { publicId, deliveryType, version } = readTransformInput(ctx, i);
+	const { publicId, deliveryType, version, continueFrom } = readTransformInput(ctx, i);
 	const quality = ctx.getNodeParameter('imageQuality', i, 'auto') as string;
 
 	const transformation = joinTransformation(optimizeComponents({ quality, resourceType: 'image' }));
@@ -16,6 +16,7 @@ export const optimizeImage: OperationHandler = async (ctx, i, creds) => {
 			transformation,
 			publicId,
 			version,
+			continueFrom,
 		}),
 	];
 };

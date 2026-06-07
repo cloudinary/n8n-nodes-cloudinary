@@ -29,6 +29,14 @@ const ALL_TRANSFORM_OPS = [
 // delivery URL) and has no use for the version/CDN-cache-bust Additional Option.
 const DELIVERY_URL_OPS = ALL_TRANSFORM_OPS.filter((op) => op !== 'videoPlayer');
 
+// Ops that can build on a transformation piped from a previous step (the `Continue
+// From Transformation` field). Excludes `customTransformation` (the user already
+// controls the whole string there) and `combineTransformations` (Multi-Step chains
+// its steps internally) — and the non-delivery `videoPlayer`.
+const CHAINABLE_TRANSFORM_OPS = DELIVERY_URL_OPS.filter(
+	(op) => op !== 'customTransformation' && op !== 'combineTransformations',
+);
+
 const QUALITY_OPTIONS = [
 	{ name: 'Auto (Recommended)', value: 'auto', description: 'Let Cloudinary choose the best quality/size trade-off' },
 	{ name: 'Auto - Best', value: 'best', description: 'Higher quality, larger files' },
@@ -81,6 +89,24 @@ export const transformFields: INodeProperties[] = [
 			show: {
 				resource: ['transform', 'widget'],
 				operation: ALL_TRANSFORM_OPS,
+			},
+		},
+	},
+	{
+		displayName: 'Continue From Transformation',
+		name: 'continueFromTransformation',
+		type: 'string',
+		default: '',
+		placeholder: 'c_fill,w_800,h_600',
+		// `$json` is the n8n expression variable — correctly lowercase. The
+		// miscased-json rule is a false positive here; its autofix would rewrite it
+		// to `$JSON`, which is undefined in n8n and breaks the example. Keep lowercase.
+		// eslint-disable-next-line n8n-nodes-base/node-param-description-miscased-json
+		description: 'Optional. A transformation to build on, prepended before this operation\'s own transformation so the two compound into one delivery URL. Wire the previous Transform action\'s output here — <code>{{ $json.transformation }}</code> — to chain steps across nodes. Leave empty to start fresh.',
+		displayOptions: {
+			show: {
+				resource: ['transform'],
+				operation: CHAINABLE_TRANSFORM_OPS,
 			},
 		},
 	},
@@ -396,21 +422,6 @@ export const transformFields: INodeProperties[] = [
 		],
 		default: 'jpg',
 		description: 'Format of the generated thumbnail image',
-		displayOptions: {
-			show: { resource: ['transform'], operation: ['videoThumbnail'] },
-		},
-	},
-	{
-		displayName: 'Base Transformation',
-		name: 'thumbnailBaseTransformation',
-		type: 'string',
-		default: '',
-		placeholder: 'c_fill,w_800,h_600',
-		// `$json` is the n8n expression variable — correctly lowercase. The
-		// miscased-json rule is a false positive here; its autofix would rewrite it
-		// to `$JSON`, which is undefined in n8n and breaks the example. Keep lowercase.
-		// eslint-disable-next-line n8n-nodes-base/node-param-description-miscased-json
-		description: 'Cloudinary transformation string prepended before the frame selector. Use <code>{{ $json.transformation }}</code> to chain from a previous step. Accepts a raw transformation string (e.g. <code>c_fill,w_800,h_600</code>).',
 		displayOptions: {
 			show: { resource: ['transform'], operation: ['videoThumbnail'] },
 		},

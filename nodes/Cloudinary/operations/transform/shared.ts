@@ -1,25 +1,31 @@
 import { IDataObject, IExecuteFunctions, NodeOperationError } from 'n8n-workflow';
-import { buildDeliveryUrl } from '../../cloudinary.utils';
+import { buildDeliveryUrl, joinTransformation } from '../../cloudinary.utils';
 import { CloudinaryCredentials } from '../types';
 
 /**
- * Identity + delivery options shared by every Transform operation: the public ID
- * plus the `Additional Options` collection (delivery type, version).
+ * Identity + delivery options shared by every Transform operation: the public ID,
+ * the `Additional Options` collection (delivery type, version), and the optional
+ * `Continue From Transformation` string (a transformation piped from a previous
+ * step, prepended before this op's own components — see buildTransformResult).
  */
 export interface TransformInput {
 	publicId: string;
 	deliveryType: string;
 	version: string;
+	continueFrom: string;
 }
 
 export const readTransformInput = (ctx: IExecuteFunctions, i: number): TransformInput => {
 	const publicId = ctx.getNodeParameter('transformPublicId', i) as string;
 	const deliveryType = ctx.getNodeParameter('type', i, 'upload') as string;
 	const additional = ctx.getNodeParameter('transformAdditionalOptions', i, {}) as IDataObject;
+	// Only the chainable ops surface this field; for the rest it reads as '' (no-op).
+	const continueFrom = ctx.getNodeParameter('continueFromTransformation', i, '') as string;
 	return {
 		publicId,
 		deliveryType: deliveryType || 'upload',
 		version: (additional.version as string) || '',
+		continueFrom: continueFrom.trim(),
 	};
 };
 
@@ -37,8 +43,17 @@ export const buildTransformResult = (
 		publicId: string;
 		format?: string;
 		version?: string;
+		// A transformation piped from a previous step (the `Continue From
+		// Transformation` field). Prepended before this op's own transformation so the
+		// two compound, e.g. `c_fill,w_400` + `f_auto/q_auto` → `c_fill,w_400/f_auto/q_auto`.
+		// Empty (the default for non-chainable ops) leaves the transformation untouched.
+		continueFrom?: string;
 	},
 ): IDataObject => {
+	const transformation = joinTransformation([
+		params.continueFrom || undefined,
+		params.transformation,
+	]);
 	// The format becomes the delivery URL's trailing extension, and is meaningful only
 	// for stored-asset types: their public_id is opaque, so the extension is what
 	// selects the delivered representation. The op's explicit format (Convert/Thumbnail)
@@ -56,7 +71,7 @@ export const buildTransformResult = (
 		cloudName: creds.cloudName,
 		resourceType: params.resourceType,
 		type: params.type,
-		transformation: params.transformation,
+		transformation,
 		publicId: params.publicId,
 		format: effectiveFormat || undefined,
 		version: params.version || undefined,
@@ -69,7 +84,7 @@ export const buildTransformResult = (
 		resource_type: params.resourceType,
 		type: params.type,
 		public_id: params.publicId,
-		transformation: params.transformation,
+		transformation,
 	};
 	if (effectiveFormat) {
 		result.format = effectiveFormat;

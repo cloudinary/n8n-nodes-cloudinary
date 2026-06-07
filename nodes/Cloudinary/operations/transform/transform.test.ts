@@ -380,20 +380,20 @@ describe('transform:videoThumbnail', () => {
 		await expect(videoThumbnail(ctx, 0, testCreds)).rejects.toThrow(/timestamp is required/);
 	});
 
-	it('prepends a base transformation before so_auto', async () => {
+	it('prepends a continued-from transformation before so_auto', async () => {
 		const { ctx } = makeCtx({
-			params: { transformPublicId: 'clip', thumbnailBaseTransformation: 'c_fill,w_800,h_600' },
+			params: { transformPublicId: 'clip', continueFromTransformation: 'c_fill,w_800,h_600' },
 		});
 		const [out] = await videoThumbnail(ctx, 0, testCreds);
 		expect(out.transformation).toBe('c_fill,w_800,h_600/so_auto');
 		expect(out.secure_url).toBe(`${HOST}/video/upload/c_fill,w_800,h_600/so_auto/clip.jpg`);
 	});
 
-	it('prepends a base transformation before a specific timestamp', async () => {
+	it('prepends a continued-from transformation before a specific timestamp', async () => {
 		const { ctx } = makeCtx({
 			params: {
 				transformPublicId: 'clip',
-				thumbnailBaseTransformation: 'so_5,eo_10',
+				continueFromTransformation: 'so_5,eo_10',
 				thumbnailFrameMode: 'time',
 				thumbnailTimestamp: '2',
 			},
@@ -402,12 +402,76 @@ describe('transform:videoThumbnail', () => {
 		expect(out.transformation).toBe('so_5,eo_10/so_2');
 	});
 
-	it('omits base transformation from the URL when blank', async () => {
+	it('omits the continued-from transformation from the URL when blank', async () => {
 		const { ctx } = makeCtx({
-			params: { transformPublicId: 'clip', thumbnailBaseTransformation: '' },
+			params: { transformPublicId: 'clip', continueFromTransformation: '' },
 		});
 		const [out] = await videoThumbnail(ctx, 0, testCreds);
 		expect(out.transformation).toBe('so_auto');
+	});
+});
+
+describe('transform Continue From Transformation (cross-op chaining)', () => {
+	it('prepends the continued-from transformation before an optimize op', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'sample', continueFromTransformation: 'c_fill,w_400,h_300' },
+		});
+		const [out] = await optimizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_fill,w_400,h_300/f_auto/q_auto');
+		expect(out.secure_url).toBe(`${HOST}/image/upload/c_fill,w_400,h_300/f_auto/q_auto/sample`);
+	});
+
+	it('prepends a multi-component continued-from transformation before a resize op', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				resizeWidth: 200,
+				continueFromTransformation: 'c_fill,g_auto,w_800/f_auto',
+			},
+		});
+		const [out] = await resizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_fill,g_auto,w_800/f_auto/c_limit,w_200');
+	});
+
+	it('chains before a crop op (the typical resize → crop pipe)', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				cropWidth: 100,
+				cropHeight: 100,
+				continueFromTransformation: 'c_limit,w_800',
+			},
+		});
+		const [out] = await cropImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_limit,w_800/c_fill,g_auto,w_100,h_100');
+	});
+
+	it('chains before a video trim op', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'clip',
+				trimDuration: '5',
+				continueFromTransformation: 'c_fill,ar_9:16,w_720',
+			},
+		});
+		const [out] = await trimVideo(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_fill,ar_9:16,w_720/du_5');
+	});
+
+	it('trims surrounding whitespace from the continued-from transformation', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'sample', continueFromTransformation: '  c_fill,w_400  ' },
+		});
+		const [out] = await optimizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('c_fill,w_400/f_auto/q_auto');
+	});
+
+	it('is a no-op when left blank', async () => {
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'sample', continueFromTransformation: '' },
+		});
+		const [out] = await optimizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('f_auto/q_auto');
 	});
 });
 

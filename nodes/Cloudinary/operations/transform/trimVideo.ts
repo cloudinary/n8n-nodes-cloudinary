@@ -7,7 +7,7 @@ import { buildComponents, buildTransformResult, readTransformInput, trimComponen
  * is allowed; at least one is required. Values are in seconds (e.g. 2.5).
  */
 export const trimVideo: OperationHandler = async (ctx, i, creds) => {
-	const { publicId, deliveryType, version } = readTransformInput(ctx, i);
+	const { publicId, deliveryType, version, continueFrom } = readTransformInput(ctx, i);
 	const start = ctx.getNodeParameter('trimStart', i, '') as string;
 	const end = ctx.getNodeParameter('trimEnd', i, '') as string;
 	const duration = ctx.getNodeParameter('trimDuration', i, '') as string;
@@ -21,6 +21,7 @@ export const trimVideo: OperationHandler = async (ctx, i, creds) => {
 			transformation: joinTransformation(components),
 			publicId,
 			version,
+			continueFrom,
 		}),
 	];
 };

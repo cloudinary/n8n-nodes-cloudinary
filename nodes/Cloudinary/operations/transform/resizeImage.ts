@@ -17,7 +17,7 @@ import {
 const makeResize =
 	(resourceType: 'image' | 'video'): OperationHandler =>
 	async (ctx, i, creds) => {
-		const { publicId, deliveryType, version } = readTransformInput(ctx, i);
+		const { publicId, deliveryType, version, continueFrom } = readTransformInput(ctx, i);
 		const width = ctx.getNodeParameter('resizeWidth', i, 0) as number;
 		const height = ctx.getNodeParameter('resizeHeight', i, 0) as number;
 		const fit = ctx.getNodeParameter('resizeFit', i, 'limit') as string;
@@ -36,6 +36,7 @@ const makeResize =
 				transformation: joinTransformation(components),
 				publicId,
 				version,
+				continueFrom,
 			}),
 		];
 	};
