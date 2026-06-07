@@ -55,7 +55,7 @@ export const widgetFields: INodeProperties[] = [
 			{ name: 'WebM', value: 'webm', description: 'Progressive WebM' },
 		],
 		default: [],
-		description: 'Preferred delivery formats in fallback order. Leave empty to use the player\'s default format selection.',
+		description: 'Preferred delivery formats in fallback order. Leave empty to use the player\'s default format selection. Note: the adaptive-streaming types (HLS, MPEG-DASH) deliver via a streaming profile and cannot be combined with a Transformation that pins a format (an f_ component such as f_auto:video, e.g. from an Optimize step). For adaptive streaming, keep the transformation to resize/crop/trim only.',
 		displayOptions: {
 			show: { resource: ['widget'], operation: ['videoPlayer'] },
 		},
@@ -75,7 +75,8 @@ export const widgetFields: INodeProperties[] = [
 		name: 'playerTransformation',
 		type: 'string',
 		default: '',
-		description: 'Cloudinary transformation string applied to the video source in the self-hosted player (player_config output). Note: not included in the iframe embed URL — the Cloudinary player iframe does not support video-level transformations via URL parameters.',
+		placeholder: 'c_fill,w_640,h_360/e_blur:500',
+		description: 'Cloudinary transformation string applied to the played video stream — in both the iframe embed URL and the player_config output. Use video-capable transforms (resize/crop, trim, e_blur, e_fade, vc_, etc.). Image-only effects such as e_grayscale are silently ignored on video, so they have no visible effect here; the poster image is a separate source and is not affected by this field. See the video effects reference: https://cloudinary.com/documentation/video_effects_and_enhancements.',
 		displayOptions: {
 			show: { resource: ['widget'], operation: ['videoPlayer'] },
 		},

@@ -61,10 +61,74 @@ describe('widget:videoPlayer', () => {
 		expect(out.embed_url).toContain('player[colors][text]=%23ffffff');
 	});
 
-	it('omits transformation from embed_url', async () => {
-		const { ctx } = makeCtx({ params: { transformPublicId: 'v', playerTransformation: 'q_auto,f_auto' } });
+	it('applies transformation to the video stream via source[transformation][raw_transformation]', async () => {
+		// The embed page feeds the value to new cloudinary.Transformation(obj), so a raw
+		// string must ride under raw_transformation to reach the video stream (a flat
+		// source[transformation]=<string> is ignored). Verified in-browser with e_blur:1000.
+		const { ctx } = makeCtx({
+			params: { transformPublicId: 'v', playerTransformation: 'c_fill,w_400/f_auto' },
+		});
 		const [out] = await videoPlayer(ctx, 0, testCreds);
-		expect(out.embed_url).not.toContain('transformation');
+		expect(out.embed_url).toContain(
+			`source[transformation][raw_transformation]=${encodeURIComponent('c_fill,w_400/f_auto')}`,
+		);
+	});
+
+	it('omits source[transformation] from embed_url when transformation is blank', async () => {
+		const { ctx } = makeCtx({ params: { transformPublicId: 'v' } });
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).not.toContain('source[transformation]');
+	});
+
+	it('throws when a format-pinning transformation is combined with an HLS source type', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'samples/elephants',
+				playerSourceTypes: ['hls', 'mp4'],
+				playerTransformation: 'f_auto:video/q_auto/c_fill,ar_9:16,w_768',
+			},
+		});
+		await expect(videoPlayer(ctx, 0, testCreds)).rejects.toThrow(/streaming profile|adaptive-streaming/i);
+	});
+
+	it('throws for a DASH source type too, naming the offending source type', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'v',
+				playerSourceTypes: ['dash'],
+				playerTransformation: 'f_webm/c_scale,w_640',
+			},
+		});
+		await expect(videoPlayer(ctx, 0, testCreds)).rejects.toThrow(/dash/i);
+	});
+
+	it('allows crop/trim transforms with HLS (no format pinned)', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'v',
+				playerSourceTypes: ['hls'],
+				playerTransformation: 'c_fill,ar_9:16,w_768/so_5,eo_30',
+			},
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain('source[sourceTypes][0]=hls');
+		expect(out.embed_url).toContain(
+			`source[transformation][raw_transformation]=${encodeURIComponent('c_fill,ar_9:16,w_768/so_5,eo_30')}`,
+		);
+	});
+
+	it('allows a format-pinning transform with only progressive source types', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'v',
+				playerSourceTypes: ['mp4', 'webm'],
+				playerTransformation: 'f_auto:video/q_auto',
+			},
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain(
+			`source[transformation][raw_transformation]=${encodeURIComponent('f_auto:video/q_auto')}`,
+		);
 	});
 
 	it('includes transformation in player_config as raw_transformation array', async () => {
