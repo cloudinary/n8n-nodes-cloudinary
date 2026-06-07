@@ -2,7 +2,8 @@
 	"node": "n8n-nodes-base.cloudinary",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
-	"categories": ["Media", "Data & Storage"],
+	"categories": ["Data & Storage", "Marketing & Content"],
+	"alias": ["video", "image", "media", "transform", "transcode", "optimize", "resize", "crop", "thumbnail", "upload", "CDN", "asset", "DAM"],
 	"resources": {
 		"credentialDocumentation": [
 			{
@@ -12,6 +13,9 @@
 		"primaryDocumentation": [
 			{
 				"url": "https://cloudinary.com/documentation/upload_images"
+			},
+			{
+				"url": "https://cloudinary.com/documentation/video_best_practices"
 			}
 		]
 	}

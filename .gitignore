@@ -140,3 +140,12 @@ vite.config.ts.timestamp-*
 
 # IDE
 .idea
+
+# Codex 
+.codex
+
+# Local scratch / temp files (not for commit)
+.local/
+examples/
+
+.DS_Store

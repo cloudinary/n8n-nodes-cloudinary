@@ -13,6 +13,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # backward-compatibility-check builds a worktree at the deployed
+          # baseline commit, so the full history (not a shallow clone) must
+          # be available.
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -28,4 +33,10 @@ jobs:
 
       - name: Run build
         run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Backward-compatibility contract check
+        run: npm run backward-compatibility-check
 
