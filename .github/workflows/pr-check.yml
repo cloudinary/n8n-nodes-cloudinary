@@ -25,6 +25,19 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
+      # Every merge to master publishes (see release.yml), so each PR must
+      # bump package.json version or the publish step republishes the same
+      # version and confuses the n8n UI's update detection.
+      - name: Require version bump
+        run: |
+          BASE_VERSION=$(git show origin/master:package.json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
+          HEAD_VERSION=$(node -p "require('./package.json').version")
+          if [ "$BASE_VERSION" = "$HEAD_VERSION" ]; then
+            echo "::error file=package.json::package.json version is still $HEAD_VERSION (same as master). Bump it — every merge to master is published."
+            exit 1
+          fi
+          echo "Version bump OK: $BASE_VERSION -> $HEAD_VERSION"
+
       - name: Install dependencies
         run: npm ci
 
