@@ -38,30 +38,57 @@ interface PlayerParams {
 	textColor: string;
 	fontFace: string;
 	advanced: IDataObject;
+	ai: IDataObject;
 }
 
 export const videoPlayer: OperationHandler = async (ctx, i, creds) => {
 	const { publicId, deliveryType } = readTransformInput(ctx, i);
+
+	// Controls are grouped into purpose-named collections in the UI (see widget.fields.ts).
+	// Read each collection once, then pull values with defaults. `playback` and `features`
+	// are merged into a single `advanced` bag because buildEmbedUrl/buildPlayerConfig key
+	// off the same toggle names regardless of which UI group they now live in.
+	const playback = ctx.getNodeParameter('playerPlayback', i, {}) as IDataObject;
+	const layout = ctx.getNodeParameter('playerLayout', i, {}) as IDataObject;
+	const appearance = ctx.getNodeParameter('playerAppearance', i, {}) as IDataObject;
+	const features = ctx.getNodeParameter('playerFeatures', i, {}) as IDataObject;
+	const ai = ctx.getNodeParameter('playerAiOptions', i, {}) as IDataObject;
+	const num = (v: unknown, d: number): number => (v === undefined ? d : Number(v) || 0);
+
 	const p: PlayerParams = {
 		publicId,
 		deliveryType,
-		autoplayMode: ctx.getNodeParameter('playerAutoplayMode', i, '') as string,
-		loop: ctx.getNodeParameter('playerLoop', i, false) as boolean,
-		muted: ctx.getNodeParameter('playerMuted', i, false) as boolean,
+		autoplayMode: (playback.autoplayMode as string) ?? '',
+		loop: (playback.loop as boolean) ?? false,
+		muted: (playback.muted as boolean) ?? false,
 		sourceTypes: ctx.getNodeParameter('playerSourceTypes', i, []) as string[],
 		poster: ctx.getNodeParameter('playerPoster', i, '') as string,
 		transformation: ctx.getNodeParameter('playerTransformation', i, '') as string,
-		fluid: ctx.getNodeParameter('playerFluid', i, false) as boolean,
-		width: ctx.getNodeParameter('playerWidth', i, 0) as number,
-		height: ctx.getNodeParameter('playerHeight', i, 0) as number,
-		aspectRatio: ctx.getNodeParameter('playerAspectRatio', i, '') as string,
-		cropMode: ctx.getNodeParameter('playerCropMode', i, 'smart') as string,
-		skin: ctx.getNodeParameter('playerSkin', i, 'dark') as string,
-		baseColor: ctx.getNodeParameter('playerBaseColor', i, '') as string,
-		accentColor: ctx.getNodeParameter('playerAccentColor', i, '') as string,
-		textColor: ctx.getNodeParameter('playerTextColor', i, '') as string,
-		fontFace: ctx.getNodeParameter('playerFontFace', i, '') as string,
-		advanced: ctx.getNodeParameter('playerAdvancedOptions', i, {}) as IDataObject,
+		fluid: (layout.fluid as boolean) ?? false,
+		width: num(layout.width, 0),
+		height: num(layout.height, 0),
+		aspectRatio: (layout.aspectRatio as string) ?? '',
+		cropMode: (layout.cropMode as string) ?? 'smart',
+		skin: (appearance.skin as string) ?? 'dark',
+		baseColor: (appearance.baseColor as string) ?? '',
+		accentColor: (appearance.accentColor as string) ?? '',
+		textColor: (appearance.textColor as string) ?? '',
+		fontFace: (appearance.fontFace as string) ?? '',
+		// buildEmbedUrl/buildPlayerConfig read controls/playsinline/bigPlayButton (Playback)
+		// alongside pictureInPictureToggle/seekThumbnails/hdr/floating (Features). The chapters
+		// button lives in the AI group (gated on Generate Chapters) since it has no purpose
+		// without a chapters source, so it's read from `ai` below.
+		advanced: {
+			controls: playback.controls,
+			playsinline: playback.playsinline,
+			bigPlayButton: playback.bigPlayButton,
+			pictureInPictureToggle: features.pictureInPictureToggle,
+			chaptersButton: ai.generateChapters ? ai.chaptersButton : undefined,
+			seekThumbnails: features.seekThumbnails,
+			hdr: features.hdr,
+			floatingWhenNotVisible: features.floatingWhenNotVisible,
+		},
+		ai,
 	};
 
 	// Fail fast on the streaming-profile vs format-selection conflict: an HLS/DASH source
@@ -200,6 +227,30 @@ function buildPlayerConfig(cloudName: string, p: PlayerParams): IDataObject {
 	if (adv.hdr) cfg.hdr = true;
 	if (adv.floatingWhenNotVisible && adv.floatingWhenNotVisible !== 'disabled') {
 		cfg.floatingWhenNotVisible = adv.floatingWhenNotVisible;
+	}
+
+	// On-demand AI generation — emitted into player_config only (these are JS player.source()
+	// options, not iframe URL params). The player generates each only if it doesn't already
+	// exist, returning a 202 while it works. See the customization docs.
+	const ai = p.ai;
+	if (ai.generateTitle) cfg.title = true;
+	if (ai.generateDescription) cfg.description = true;
+	if (ai.generateChapters) cfg.chapters = true;
+	if (ai.generateCaptions) {
+		const textTracks: IDataObject = {
+			// No `url` → the player auto-generates the transcript for captions.
+			captions: { label: String(ai.captionsLabel || 'English (auto)'), default: true },
+		};
+		// Each language code becomes an auto-translated subtitle track (no `url`). Translation
+		// requires the Google Translate add-on — see the field description and docs.
+		const langs = String(ai.subtitleLanguages || '')
+			.split(',')
+			.map((l) => l.trim())
+			.filter(Boolean);
+		if (langs.length) {
+			textTracks.subtitles = langs.map((language) => ({ label: language, language }));
+		}
+		cfg.textTracks = textTracks;
 	}
 
 	return cfg;
