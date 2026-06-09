@@ -60,6 +60,16 @@ The *Widget → Video Player* operation builds a [Cloudinary Video Player](https
 - **Adaptive streaming vs. format selection.** If you select an adaptive-streaming **Source Type** (HLS or MPEG-DASH), the transformation must **not** pin a delivery format (an `f_` component such as `f_auto:video`, which an *Optimize* step adds). The two are incompatible — Cloudinary can't apply a streaming profile to a fixed non-streaming format. The node detects this and fails with a clear message; for adaptive streaming, keep the transformation to resize/crop/trim only.
 - **Aspect Ratio crops on top of your Transformation.** Setting an **Aspect Ratio** makes the player re-crop the video to those proportions using the **Crop Mode** field (*Smart*, *Fill*, or *Pad* — default *Smart*). With the default *Smart* mode, that re-crop can't be combined with a Transformation that already crops the video, and the player rejects it. The node fails fast with a clear message; to render either set *Crop Mode* to *Fill* or *Pad*, or clear *Aspect Ratio* and let your Transformation define the framing.
 
+#### AI-generated content (captions, title, description, chapters)
+
+The **AI-Generated Content** options let the player generate content on demand — no caption files to author. Toggle **Generate Captions** (auto-transcript shown as toggleable captions), **Generate Title**, **Generate Description**, and/or **Generate Chapters**. The player only generates what doesn't already exist, and transcript generation needs the video's audio to contain dialogue. These options are emitted into the `player_config` (the JS `player.source()` config), not the iframe embed URL. On most accounts these are **enabled by default** under *Settings → Security → Unsigned actions allowed* — so there's nothing to switch on. See the [Video Player customization docs](https://cloudinary.com/documentation/video_player_customization).
+
+> **Translated subtitles need the Google Translate add-on.** The **Subtitle Languages** field (e.g. `es, fr-FR`) produces AI-*translated* subtitle tracks, which require the **Google Translate** add-on on your account. To enable it:
+> 1. **Register for the add-on** on the [Cloudinary Add-ons page](https://console.cloudinary.com/settings/addons) (Console → *Settings → Add-ons*) — the free tier is enough to try it.
+> 2. Allow it as an unsigned transformation: **Console → *Settings → Security*** → *Unsigned add-on transformations allowed* → enable **Google Translate**.
+>
+> Base captions (the *Generate Captions* toggle, single language) need **no** add-on — only translation into other languages does.
+
 ## Supported authentication methods
 
 - API key & API secret
