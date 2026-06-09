@@ -15,7 +15,12 @@ export class Cloudinary implements INodeType {
 		name: 'cloudinary',
 		icon: 'file:cloudinary.svg',
 		group: ['transform'],
-		version: 1,
+		// v1 exposed the Video Player as flat `player*` params; v2 regrouped them into
+		// collections (see widget.fields.ts). Both schemas ship side by side, gated by
+		// `@version` in displayOptions, so workflows saved against v1 keep their settings.
+		// New nodes default to v2. → docs/backwards-compat.md
+		version: [1, 2],
+		defaultVersion: 2,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		// Read by both humans (node tooltip in the editor) and LLMs (tool schema when this
 		// node is invoked via an AI Agent — see `usableAsTool` below). Keep it concise,

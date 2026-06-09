@@ -19,6 +19,8 @@ export interface MockCtxOptions {
 	items?: IDataObject[];
 	/** What continueOnFail() reports. */
 	continueOnFail?: boolean;
+	/** Node typeVersion seen via getNode().typeVersion (defaults to the latest, 2). */
+	typeVersion?: number;
 }
 
 /**
@@ -33,6 +35,7 @@ export function makeCtx(options: MockCtxOptions = {}) {
 		binary = { fileName: 'cat.png', mimeType: 'image/png' },
 		buffer = Buffer.from('PNGDATA'),
 		continueOnFail = false,
+		typeVersion = 2,
 	} = options;
 
 	const http = vi.fn().mockResolvedValue({});
@@ -42,7 +45,7 @@ export function makeCtx(options: MockCtxOptions = {}) {
 		getNodeParameter: vi.fn((name: string, _i: number, fallback?: unknown) =>
 			name in params ? params[name] : fallback,
 		),
-		getNode: vi.fn(() => ({ name: 'Cloudinary', type: 'cloudinary' })),
+		getNode: vi.fn(() => ({ name: 'Cloudinary', type: 'cloudinary', typeVersion })),
 		continueOnFail: vi.fn(() => continueOnFail),
 		helpers: {
 			assertBinaryData: vi.fn(() => binary),

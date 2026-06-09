@@ -381,3 +381,127 @@ describe('widget:videoPlayer', () => {
 		expect(cfg.chaptersButton).toBeUndefined();
 	});
 });
+
+// ── Version dispatch (typeVersion 1 ⇄ 2) ───────────────────────────────────────
+// The rest of this suite exercises v2 via makeCtx's default typeVersion (2). These two
+// tests pin the dispatch explicitly at the v2 end: a v2 node reads the collections and
+// ignores any stray flat (v1) param. The v1 end is pinned in the block below.
+describe('widget:videoPlayer — v2 collections (typeVersion 2)', () => {
+	it('reads the v2 collections when the node is explicitly v2', async () => {
+		const { ctx } = makeCtx({
+			typeVersion: 2,
+			params: { transformPublicId: 'v', playerPlayback: { autoplayMode: 'always', muted: true } },
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain('player[autoplayMode]=always');
+		expect(out.embed_url).toContain('player[muted]=true');
+	});
+
+	it('ignores v1 flat params when the node is v2', async () => {
+		// A v2 node reads only the collections, so a stray flat value (e.g. a hand-edited
+		// or partially-migrated workflow) must not leak in.
+		const { ctx } = makeCtx({
+			typeVersion: 2,
+			params: { transformPublicId: 'v', playerAutoplayMode: 'always', playerSkin: 'light' },
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).not.toContain('player[autoplayMode]');
+		expect(out.embed_url).not.toContain('player[skin]');
+	});
+});
+
+// ── v1 backward compatibility ──────────────────────────────────────────────────
+// 0.1.x exposed the player settings as FLAT params (playerAutoplayMode, playerSkin, …);
+// 0.2.0 regrouped them into collections behind a typeVersion 2 bump. A workflow saved on
+// 0.1.x carries typeVersion 1, so the handler must still read the flat names and produce
+// the same output. These tests pin that contract. (typeVersion defaults to 2 elsewhere.)
+describe('widget:videoPlayer — v1 legacy flat params (typeVersion 1)', () => {
+	it('reads flat playback params (autoplayMode, muted, loop)', async () => {
+		const { ctx } = makeCtx({
+			typeVersion: 1,
+			params: {
+				transformPublicId: 'v',
+				playerAutoplayMode: 'always',
+				playerMuted: true,
+				playerLoop: true,
+			},
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain('player[autoplayMode]=always');
+		expect(out.embed_url).toContain('player[muted]=true');
+		expect(out.embed_url).toContain('player[loop]=true');
+	});
+
+	it('reads flat appearance params (skin + colors)', async () => {
+		const { ctx } = makeCtx({
+			typeVersion: 1,
+			params: {
+				transformPublicId: 'v',
+				playerSkin: 'light',
+				playerBaseColor: '#0071ba',
+				playerAccentColor: '#db8226',
+			},
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain('player[skin]=light');
+		expect(out.embed_url).toContain('player[colors][base]=%230071ba');
+		const cfg = JSON.parse(out.player_config as string);
+		expect(cfg.colors).toEqual({ base: '#0071ba', accent: '#db8226' });
+	});
+
+	it('reads flat layout params (fluid, width, height, aspect ratio, crop mode)', async () => {
+		const { ctx } = makeCtx({
+			typeVersion: 1,
+			params: {
+				transformPublicId: 'v',
+				playerWidth: 800,
+				playerHeight: 450,
+				playerAspectRatio: '16:9',
+				playerCropMode: 'fill',
+			},
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain('player[width]=800');
+		expect(out.embed_url).toContain('player[height]=450');
+		expect(out.embed_url).toContain('player[aspectRatio]=16%3A9');
+		expect(out.embed_url).toContain('source[cropMode]=fill');
+	});
+
+	it('reads the flat playerAdvancedOptions bag (controls, chaptersButton)', async () => {
+		const { ctx } = makeCtx({
+			typeVersion: 1,
+			params: {
+				transformPublicId: 'v',
+				playerAdvancedOptions: { controls: false, chaptersButton: true },
+			},
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).toContain('player[controls]=false');
+		// In v1 the chapters button was a free-standing toggle (no AI chapters source).
+		expect(out.embed_url).toContain('player[chaptersButton]=true');
+		const cfg = JSON.parse(out.player_config as string);
+		expect(cfg.controls).toBe(false);
+		expect(cfg.chaptersButton).toBe(true);
+	});
+
+	it('emits no AI keys for v1 (it had no AI-generated-content options)', async () => {
+		const { ctx } = makeCtx({ typeVersion: 1, params: { transformPublicId: 'v' } });
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		const cfg = JSON.parse(out.player_config as string);
+		expect(cfg.textTracks).toBeUndefined();
+		expect(cfg.title).toBeUndefined();
+		expect(cfg.description).toBeUndefined();
+		expect(cfg.chapters).toBeUndefined();
+	});
+
+	it('ignores v2 collection params when the node is v1', async () => {
+		// A v1 node reads only the flat names, so a stray v2 collection value (e.g. from a
+		// hand-edited workflow) must not leak in.
+		const { ctx } = makeCtx({
+			typeVersion: 1,
+			params: { transformPublicId: 'v', playerPlayback: { autoplayMode: 'always' } },
+		});
+		const [out] = await videoPlayer(ctx, 0, testCreds);
+		expect(out.embed_url).not.toContain('player[autoplayMode]');
+	});
+});
