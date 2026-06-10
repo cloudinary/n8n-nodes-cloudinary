@@ -1,4 +1,4 @@
-import { IDataObject, NodeOperationError } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, NodeOperationError } from 'n8n-workflow';
 import { OperationHandler } from '../types';
 import { readTransformInput } from '../transform/shared';
 
@@ -44,52 +44,15 @@ interface PlayerParams {
 export const videoPlayer: OperationHandler = async (ctx, i, creds) => {
 	const { publicId, deliveryType } = readTransformInput(ctx, i);
 
-	// Controls are grouped into purpose-named collections in the UI (see widget.fields.ts).
-	// Read each collection once, then pull values with defaults. `playback` and `features`
-	// are merged into a single `advanced` bag because buildEmbedUrl/buildPlayerConfig key
-	// off the same toggle names regardless of which UI group they now live in.
-	const playback = ctx.getNodeParameter('playerPlayback', i, {}) as IDataObject;
-	const layout = ctx.getNodeParameter('playerLayout', i, {}) as IDataObject;
-	const appearance = ctx.getNodeParameter('playerAppearance', i, {}) as IDataObject;
-	const features = ctx.getNodeParameter('playerFeatures', i, {}) as IDataObject;
-	const ai = ctx.getNodeParameter('playerAiOptions', i, {}) as IDataObject;
-	const num = (v: unknown, d: number): number => (v === undefined ? d : Number(v) || 0);
-
-	const p: PlayerParams = {
-		publicId,
-		deliveryType,
-		autoplayMode: (playback.autoplayMode as string) ?? '',
-		loop: (playback.loop as boolean) ?? false,
-		muted: (playback.muted as boolean) ?? false,
-		sourceTypes: ctx.getNodeParameter('playerSourceTypes', i, []) as string[],
-		poster: ctx.getNodeParameter('playerPoster', i, '') as string,
-		transformation: ctx.getNodeParameter('playerTransformation', i, '') as string,
-		fluid: (layout.fluid as boolean) ?? false,
-		width: num(layout.width, 0),
-		height: num(layout.height, 0),
-		aspectRatio: (layout.aspectRatio as string) ?? '',
-		cropMode: (layout.cropMode as string) ?? 'smart',
-		skin: (appearance.skin as string) ?? 'dark',
-		baseColor: (appearance.baseColor as string) ?? '',
-		accentColor: (appearance.accentColor as string) ?? '',
-		textColor: (appearance.textColor as string) ?? '',
-		fontFace: (appearance.fontFace as string) ?? '',
-		// buildEmbedUrl/buildPlayerConfig read controls/playsinline/bigPlayButton (Playback)
-		// alongside pictureInPictureToggle/seekThumbnails/hdr/floating (Features). The chapters
-		// button lives in the AI group (gated on Generate Chapters) since it has no purpose
-		// without a chapters source, so it's read from `ai` below.
-		advanced: {
-			controls: playback.controls,
-			playsinline: playback.playsinline,
-			bigPlayButton: playback.bigPlayButton,
-			pictureInPictureToggle: features.pictureInPictureToggle,
-			chaptersButton: ai.generateChapters ? ai.chaptersButton : undefined,
-			seekThumbnails: features.seekThumbnails,
-			hdr: features.hdr,
-			floatingWhenNotVisible: features.floatingWhenNotVisible,
-		},
-		ai,
-	};
+	// v1 stored the player settings as flat params; v2 regrouped them into collections
+	// and added the AI-generated-content options (see widget.fields.ts). Read whichever
+	// schema this node was saved against into the same PlayerParams shape, then run the
+	// identical builders below. typeVersion is absent only in unit mocks → default to v2.
+	const version = ctx.getNode().typeVersion ?? 2;
+	const p =
+		version >= 2
+			? readPlayerParamsV2(ctx, i, publicId, deliveryType)
+			: readPlayerParamsV1(ctx, i, publicId, deliveryType);
 
 	// Fail fast on the streaming-profile vs format-selection conflict: an HLS/DASH source
 	// type delivers via a streaming profile, which can't be combined with a transformation
@@ -132,6 +95,95 @@ export const videoPlayer: OperationHandler = async (ctx, i, creds) => {
 		},
 	];
 };
+
+// ── v2 (default): settings grouped into purpose-named collections ───────────────
+// Read each collection once, then pull values with defaults. `playback` and `features`
+// are merged into a single `advanced` bag because buildEmbedUrl/buildPlayerConfig key
+// off the same toggle names regardless of which UI group they now live in.
+function readPlayerParamsV2(
+	ctx: IExecuteFunctions,
+	i: number,
+	publicId: string,
+	deliveryType: string,
+): PlayerParams {
+	const playback = ctx.getNodeParameter('playerPlayback', i, {}) as IDataObject;
+	const layout = ctx.getNodeParameter('playerLayout', i, {}) as IDataObject;
+	const appearance = ctx.getNodeParameter('playerAppearance', i, {}) as IDataObject;
+	const features = ctx.getNodeParameter('playerFeatures', i, {}) as IDataObject;
+	const ai = ctx.getNodeParameter('playerAiOptions', i, {}) as IDataObject;
+	const num = (v: unknown, d: number): number => (v === undefined ? d : Number(v) || 0);
+
+	return {
+		publicId,
+		deliveryType,
+		autoplayMode: (playback.autoplayMode as string) ?? '',
+		loop: (playback.loop as boolean) ?? false,
+		muted: (playback.muted as boolean) ?? false,
+		sourceTypes: ctx.getNodeParameter('playerSourceTypes', i, []) as string[],
+		poster: ctx.getNodeParameter('playerPoster', i, '') as string,
+		transformation: ctx.getNodeParameter('playerTransformation', i, '') as string,
+		fluid: (layout.fluid as boolean) ?? false,
+		width: num(layout.width, 0),
+		height: num(layout.height, 0),
+		aspectRatio: (layout.aspectRatio as string) ?? '',
+		cropMode: (layout.cropMode as string) ?? 'smart',
+		skin: (appearance.skin as string) ?? 'dark',
+		baseColor: (appearance.baseColor as string) ?? '',
+		accentColor: (appearance.accentColor as string) ?? '',
+		textColor: (appearance.textColor as string) ?? '',
+		fontFace: (appearance.fontFace as string) ?? '',
+		// buildEmbedUrl/buildPlayerConfig read controls/playsinline/bigPlayButton (Playback)
+		// alongside pictureInPictureToggle/seekThumbnails/hdr/floating (Features). The chapters
+		// button lives in the AI group (gated on Generate Chapters) since it has no purpose
+		// without a chapters source, so it's read from `ai` here.
+		advanced: {
+			controls: playback.controls,
+			playsinline: playback.playsinline,
+			bigPlayButton: playback.bigPlayButton,
+			pictureInPictureToggle: features.pictureInPictureToggle,
+			chaptersButton: ai.generateChapters ? ai.chaptersButton : undefined,
+			seekThumbnails: features.seekThumbnails,
+			hdr: features.hdr,
+			floatingWhenNotVisible: features.floatingWhenNotVisible,
+		},
+		ai,
+	};
+}
+
+// ── v1 (legacy): flat params + a single `playerAdvancedOptions` bag ─────────────
+// Frozen reader for workflows saved against 0.1.x. v1 had no AI-generated-content
+// options, so `ai` is empty — the builders then emit no AI keys, matching v1 output
+// exactly. The flat `advanced` bag already carries the same toggle names the builders
+// read (controls, playsinline, bigPlayButton, chaptersButton, …). Do not extend.
+function readPlayerParamsV1(
+	ctx: IExecuteFunctions,
+	i: number,
+	publicId: string,
+	deliveryType: string,
+): PlayerParams {
+	return {
+		publicId,
+		deliveryType,
+		autoplayMode: ctx.getNodeParameter('playerAutoplayMode', i, '') as string,
+		loop: ctx.getNodeParameter('playerLoop', i, false) as boolean,
+		muted: ctx.getNodeParameter('playerMuted', i, false) as boolean,
+		sourceTypes: ctx.getNodeParameter('playerSourceTypes', i, []) as string[],
+		poster: ctx.getNodeParameter('playerPoster', i, '') as string,
+		transformation: ctx.getNodeParameter('playerTransformation', i, '') as string,
+		fluid: ctx.getNodeParameter('playerFluid', i, false) as boolean,
+		width: ctx.getNodeParameter('playerWidth', i, 0) as number,
+		height: ctx.getNodeParameter('playerHeight', i, 0) as number,
+		aspectRatio: ctx.getNodeParameter('playerAspectRatio', i, '') as string,
+		cropMode: ctx.getNodeParameter('playerCropMode', i, 'smart') as string,
+		skin: ctx.getNodeParameter('playerSkin', i, 'dark') as string,
+		baseColor: ctx.getNodeParameter('playerBaseColor', i, '') as string,
+		accentColor: ctx.getNodeParameter('playerAccentColor', i, '') as string,
+		textColor: ctx.getNodeParameter('playerTextColor', i, '') as string,
+		fontFace: ctx.getNodeParameter('playerFontFace', i, '') as string,
+		advanced: ctx.getNodeParameter('playerAdvancedOptions', i, {}) as IDataObject,
+		ai: {},
+	};
+}
 
 // player[...] keys use camelCase, matching the embed-page examples in the Video
 // Player docs. The embedder accepts snake_case equivalents too (verified in-browser:
