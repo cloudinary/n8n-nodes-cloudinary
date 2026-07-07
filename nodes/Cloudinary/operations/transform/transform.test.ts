@@ -54,6 +54,28 @@ describe('transform host variants', () => {
 	});
 });
 
+describe('transform analytics', () => {
+	it('appends the `_a` analytics signature when the credential enables it', async () => {
+		const { ctx } = makeCtx({ params: { transformPublicId: 'sample' } });
+		const [out] = await optimizeImage(ctx, 0, { ...testCreds, analytics: true });
+		// Algo B, product B (Integrations), n8n code I, 5 version chars, no feature.
+		expect(out.secure_url).toMatch(
+			/^https:\/\/res\.cloudinary\.com\/demo\/image\/upload\/f_auto\/q_auto\/sample\?_a=BBI[A-Za-z0-9+/]{5}0$/,
+		);
+	});
+
+	it('treats an undefined credential analytics flag as on (opt-out default)', async () => {
+		const { ctx } = makeCtx({ params: { transformPublicId: 'sample' } });
+		// Credentials saved before the toggle existed have no `analytics` field.
+		const [out] = await optimizeImage(ctx, 0, {
+			cloudName: 'demo',
+			apiKey: 'key123',
+			apiSecret: 'secret123',
+		});
+		expect(out.secure_url as string).toContain('?_a=');
+	});
+});
+
 describe('transform delivery type and additional options', () => {
 	it('threads the top-level delivery type into the URL path', async () => {
 		const { ctx } = makeCtx({

@@ -77,6 +77,8 @@ export const buildTransformResult = (
 		version: params.version || undefined,
 		privateCdn: creds.privateCdn,
 		secureDistribution: creds.secureDistribution,
+		// Opt-out toggle on the credential; default on (undefined → on).
+		analytics: creds.analytics !== false,
 	});
 
 	const result: IDataObject = {

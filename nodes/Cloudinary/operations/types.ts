@@ -10,6 +10,11 @@ export interface CloudinaryCredentials {
 	privateCdn?: boolean;
 	/** Custom delivery hostname (CNAME). Optional. Overrides the default host. */
 	secureDistribution?: string;
+	/**
+	 * Append the SDK-analytics signature to delivery URLs. Defaults to on; the user can
+	 * opt out via the credential. Undefined (older saved credentials) is treated as on.
+	 */
+	analytics?: boolean;
 }
 
 /**

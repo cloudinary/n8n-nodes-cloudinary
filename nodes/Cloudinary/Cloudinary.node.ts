@@ -54,6 +54,9 @@ export class Cloudinary implements INodeType {
 			apiSecret: credentials.apiSecret as string,
 			privateCdn: (credentials.privateCdn as boolean) ?? false,
 			secureDistribution: (credentials.secureDistribution as string) ?? '',
+			// Default on (opt-out): credentials saved before this field existed read as
+			// undefined and should still send analytics.
+			analytics: (credentials.analytics as boolean) ?? true,
 		};
 
 		for (let i = 0; i < items.length; i++) {
