@@ -114,9 +114,9 @@ export const qualityQualifier = (quality: string): string =>
 /**
  * `[b_<background>,]c_<fit>,w_,h_` — resize to a width and/or height. The optional
  * `background` is meaningful only for the pad fit modes (`pad`/`lpad`/`mpad`), which
- * fill the area around the image; it is the raw `b_` suffix (`auto`, `blurred`, a
- * named color like `white`, or `rgb:RRGGBB`). Empty leaves Cloudinary's default
- * (black) padding. It is ignored for non-pad modes, which never pad.
+ * fill the area around the image; it is the raw `b_` suffix (`auto`, `blurred`,
+ * `gen_fill[:prompt_…]`, a named color like `white`, or `rgb:RRGGBB`). Empty leaves
+ * Cloudinary's default (black) padding. It is ignored for non-pad modes, which never pad.
  */
 export const resizeComponents = (p: {
 	width: number;
@@ -140,15 +140,21 @@ export const resizeComponents = (p: {
 const PAD_FIT_MODES = new Set(['pad', 'lpad', 'mpad']);
 
 /**
- * Resolve the Pad Background UI (a mode selector + an optional color string) into the
- * raw `b_` suffix `resizeComponents` expects, shared by the standalone Resize op and
+ * Resolve the Pad Background UI (a mode selector + an optional color/prompt string) into
+ * the raw `b_` suffix `resizeComponents` expects, shared by the standalone Resize op and
  * the Multi-Step resize step so they stay in sync. Returns '' for the default (black)
- * padding, which emits no `b_` qualifier. A hex value (with or without a leading `#`)
- * is encoded as `rgb:RRGGBB`; a named color (`white`, `lightblue`) passes through.
+ * padding, which emits no `b_` qualifier. `gen_fill` extends the image with AI-generated
+ * content and takes an optional prompt (`gen_fill:prompt_…`, URL-encoded, mirroring
+ * `cropComponents`). A hex value (with or without a leading `#`) is encoded as
+ * `rgb:RRGGBB`; a named color (`white`, `lightblue`) passes through.
  */
-export const padBackgroundSuffix = (mode: string, color: string): string => {
+export const padBackgroundSuffix = (mode: string, color: string, genFillPrompt = ''): string => {
 	if (mode === 'auto') return 'auto';
 	if (mode === 'blurred') return 'blurred';
+	if (mode === 'gen_fill') {
+		const prompt = genFillPrompt.trim();
+		return prompt ? `gen_fill:prompt_${encodeURIComponent(prompt)}` : 'gen_fill';
+	}
 	if (mode === 'color') {
 		const value = color.trim().replace(/^#/, '');
 		if (!value) return '';

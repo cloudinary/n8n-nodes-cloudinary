@@ -11,8 +11,11 @@ import {
 /**
  * Resize a stored asset to a width and/or height with a fit mode. Emits `c_<fit>,w_,h_`,
  * prefixed with a `b_` background for the pad fit modes when one is chosen. The fit modes
- * and pad backgrounds are identical for images and videos, so a single handler factory
- * serves both — only the `resource_type` (URL path segment) differs.
+ * are identical for images and videos, so a single handler factory serves both — only the
+ * `resource_type` (URL path segment) differs. The Pad Background options differ by media
+ * type (image: auto/gen_fill; video: blurred), but both ops store the choice under the same
+ * `resizePadBackground` param, so the shared read below covers both. The gen-fill prompt
+ * param exists only on the image op; on video it defaults to '' and is ignored.
  */
 const makeResize =
 	(resourceType: 'image' | 'video'): OperationHandler =>
@@ -23,7 +26,8 @@ const makeResize =
 		const fit = ctx.getNodeParameter('resizeFit', i, 'limit') as string;
 		const padBackground = ctx.getNodeParameter('resizePadBackground', i, '') as string;
 		const padBackgroundColor = ctx.getNodeParameter('resizePadBackgroundColor', i, '') as string;
-		const background = padBackgroundSuffix(padBackground, padBackgroundColor);
+		const padGenFillPrompt = ctx.getNodeParameter('resizePadGenFillPrompt', i, '') as string;
+		const background = padBackgroundSuffix(padBackground, padBackgroundColor, padGenFillPrompt);
 
 		const components = buildComponents(ctx, i, () =>
 			resizeComponents({ width, height, fit, background }),

@@ -125,9 +125,12 @@ export const transformFields: INodeProperties[] = [
 	},
 
 	// ── Resize Image / Video ───────────────────────────────────────────────────
-	// One field set, shared by the image (`resizeImage`) and video (`resizeVideo`) ops:
-	// the fit modes and pad backgrounds are identical for both media types, so the
-	// fields are gated on both operations rather than duplicated.
+	// Dimensions and fit modes are identical for both media types, so those fields are
+	// gated on both `resizeImage` and `resizeVideo`. Pad Background is NOT shared: the
+	// backgrounds Cloudinary supports differ by media type — `b_auto` and `b_gen_fill`
+	// are image-only, `b_blurred` is video-only — so it is split into two same-named
+	// `resizePadBackground` fields (one per op) with the media-appropriate options. Both
+	// write the same param name, so saved workflows keep resolving through one handler.
 	{
 		displayName: 'Width',
 		name: 'resizeWidth',
@@ -176,10 +179,33 @@ export const transformFields: INodeProperties[] = [
 		displayName: 'Pad Background',
 		name: 'resizePadBackground',
 		type: 'options',
+		// Generative Fill is surfaced high (right below Auto) for discoverability rather
+		// than sorted by value — it is another pad fill (b_gen_fill,c_pad), so it belongs
+		// alongside the other backgrounds where users expect to find it.
+		// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 		options: [
 			{ name: 'Black (Default)', value: '', description: 'Cloudinary\'s default — pad with black' },
-			{ name: 'Auto (Predominant Color)', value: 'auto', description: 'Pad with a color sampled from the asset (b_auto)' },
-			{ name: 'Blurred', value: 'blurred', description: 'Pad with a blurred, enlarged copy of the asset (b_blurred)' },
+			{ name: 'Auto (Predominant Color)', value: 'auto', description: 'Pad with a color sampled from the image (b_auto)' },
+			{ name: 'Generative Fill', value: 'gen_fill', description: 'Extend the image with AI-generated content to fill the padded area (b_gen_fill). Costs extra transformation credits and may render asynchronously on the first request.' },
+			{ name: 'Solid Color', value: 'color', description: 'Pad with a specific color set below' },
+		],
+		default: '',
+		description: 'Color or content to fill the padded area. Applies only to the Pad fit modes.',
+		displayOptions: {
+			show: {
+				resource: ['transform'],
+				operation: ['resizeImage'],
+				resizeFit: ['pad', 'lpad', 'mpad'],
+			},
+		},
+	},
+	{
+		displayName: 'Pad Background',
+		name: 'resizePadBackground',
+		type: 'options',
+		options: [
+			{ name: 'Black (Default)', value: '', description: 'Cloudinary\'s default — pad with black' },
+			{ name: 'Blurred', value: 'blurred', description: 'Pad with a blurred, enlarged copy of the video (b_blurred)' },
 			{ name: 'Solid Color', value: 'color', description: 'Pad with a specific color set below' },
 		],
 		default: '',
@@ -187,7 +213,7 @@ export const transformFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['transform'],
-				operation: ['resizeImage', 'resizeVideo'],
+				operation: ['resizeVideo'],
 				resizeFit: ['pad', 'lpad', 'mpad'],
 			},
 		},
@@ -205,6 +231,22 @@ export const transformFields: INodeProperties[] = [
 				operation: ['resizeImage', 'resizeVideo'],
 				resizeFit: ['pad', 'lpad', 'mpad'],
 				resizePadBackground: ['color'],
+			},
+		},
+	},
+	{
+		displayName: 'Generative Fill Prompt',
+		name: 'resizePadGenFillPrompt',
+		type: 'string',
+		default: '',
+		placeholder: 'a sandy beach',
+		description: 'Optional text prompt guiding the generated fill content (image only)',
+		displayOptions: {
+			show: {
+				resource: ['transform'],
+				operation: ['resizeImage'],
+				resizeFit: ['pad', 'lpad', 'mpad'],
+				resizePadBackground: ['gen_fill'],
 			},
 		},
 	},

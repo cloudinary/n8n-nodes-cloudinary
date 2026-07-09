@@ -177,6 +177,35 @@ describe('transform:resizeImage', () => {
 		expect(out.transformation).toBe('b_lightblue,c_pad,w_400,h_300');
 	});
 
+	it('emits b_gen_fill,c_pad for a generative-fill pad background', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				resizeWidth: 1200,
+				resizeHeight: 628,
+				resizeFit: 'pad',
+				resizePadBackground: 'gen_fill',
+			},
+		});
+		const [out] = await resizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_gen_fill,c_pad,w_1200,h_628');
+	});
+
+	it('URL-encodes a generative-fill prompt on the pad background', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				resizeWidth: 1200,
+				resizeHeight: 628,
+				resizeFit: 'pad',
+				resizePadBackground: 'gen_fill',
+				resizePadGenFillPrompt: 'a sandy beach',
+			},
+		});
+		const [out] = await resizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_gen_fill:prompt_a%20sandy%20beach,c_pad,w_1200,h_628');
+	});
+
 	it('ignores a pad background for a non-pad fit mode', async () => {
 		const { ctx } = makeCtx({
 			params: {
