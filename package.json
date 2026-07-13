@@ -14,7 +14,8 @@
   "license": "MIT",
   "homepage": "https://cloudinary.com/documentation",
   "author": {
-    "name": "Cloudinary"
+    "name": "Cloudinary",
+    "email": "support@cloudinary.com"
   },
   "repository": {
     "type": "git",
