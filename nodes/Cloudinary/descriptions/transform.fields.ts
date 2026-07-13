@@ -717,6 +717,19 @@ export const transformFields: INodeProperties[] = [
 						},
 					},
 					{
+						// Kept in alphabetical displayName order (Focus | Generative Fill Prompt |
+						// Height) so the fixed-collection sort rule does not fire.
+						displayName: 'Generative Fill Prompt',
+						name: 'padGenFillPrompt',
+						type: 'string',
+						default: '',
+						placeholder: 'a sandy beach',
+						description: 'Optional text prompt guiding the generated fill content (image only)',
+						displayOptions: {
+							show: { stepType: ['resize'], fit: ['pad', 'lpad', 'mpad'], padBackground: ['gen_fill'] },
+						},
+					},
+					{
 						displayName: 'Height',
 						name: 'height',
 						type: 'number',
@@ -740,14 +753,20 @@ export const transformFields: INodeProperties[] = [
 						displayName: 'Pad Background',
 						name: 'padBackground',
 						type: 'options',
+						// Multi-Step is a media-neutral compose surface, so all pad fills are offered
+						// regardless of the step's asset type (b_auto/b_gen_fill are image-only,
+						// b_blurred is video-only — validity is the builder's responsibility here).
+						// Generative Fill is surfaced high for discoverability rather than value-sorted.
+						// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 						options: [
 							{ name: 'Black (Default)', value: '' },
 							{ name: 'Auto (Predominant Color)', value: 'auto' },
 							{ name: 'Blurred', value: 'blurred' },
+							{ name: 'Generative Fill', value: 'gen_fill' },
 							{ name: 'Solid Color', value: 'color' },
 						],
 						default: '',
-						description: 'Color to fill the padded area. Applies only to the Pad fit modes.',
+						description: 'Color or content to fill the padded area. Applies only to the Pad fit modes.',
 						displayOptions: {
 							show: { stepType: ['resize'], fit: ['pad', 'lpad', 'mpad'] },
 						},

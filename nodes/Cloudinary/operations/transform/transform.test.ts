@@ -743,6 +743,29 @@ describe('transform:multiStep', () => {
 		expect(out.transformation).toBe('b_rgb:777,c_pad,w_400,h_300');
 	});
 
+	it('resize step supports a generative-fill pad background with a prompt', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				multiStepResourceType: 'image',
+				transformSteps: {
+					step: [
+						{
+							stepType: 'resize',
+							width: 1200,
+							height: 628,
+							fit: 'pad',
+							padBackground: 'gen_fill',
+							padGenFillPrompt: 'a sandy beach',
+						},
+					],
+				},
+			},
+		});
+		const [out] = await multiStep(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_gen_fill:prompt_a%20sandy%20beach,c_pad,w_1200,h_628');
+	});
+
 	it('crop by dimensions emits c_fill,g_<focus>,w_,h_', async () => {
 		const { ctx } = makeCtx({
 			params: {
