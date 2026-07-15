@@ -48,6 +48,14 @@ export class CloudinaryApi implements ICredentialType {
 				'Custom delivery hostname (CNAME) for your private CDN account. Leave empty to use the default <cloud>-res.cloudinary.com subdomain.',
 			displayOptions: { show: { privateCdn: [true] } },
 		},
+		{
+			displayName: 'Send Usage Analytics',
+			name: 'analytics',
+			type: 'boolean',
+			default: true,
+			description:
+				'Whether to append a query parameter that passes n8n usage information (_a) to the delivery URLs built by Transform operations. This data is used in aggregate form to help Cloudinary improve future versions of the Cloudinary n8n integration. No individual data is collected and this data cannot be used to identify end users in any way. Because this adds a small tag to the end of each URL, the URLs differ slightly from the plain version — so if later steps in your workflow store, compare, or reuse the exact URL, turn this off to keep them unchanged.',
+		},
 	];
 
 	// This tells how this credential is authenticated

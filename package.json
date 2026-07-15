@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-cloudinary",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "The official Cloudinary n8n node - upload media, update asset tags and metadata, and more",
   "keywords": [
     "n8n-community-node-package",
@@ -14,7 +14,8 @@
   "license": "MIT",
   "homepage": "https://cloudinary.com/documentation",
   "author": {
-    "name": "Cloudinary"
+    "name": "Cloudinary",
+    "email": "support@cloudinary.com"
   },
   "repository": {
     "type": "git",

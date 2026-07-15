@@ -54,6 +54,28 @@ describe('transform host variants', () => {
 	});
 });
 
+describe('transform analytics', () => {
+	it('appends the `_a` analytics signature when the credential enables it', async () => {
+		const { ctx } = makeCtx({ params: { transformPublicId: 'sample' } });
+		const [out] = await optimizeImage(ctx, 0, { ...testCreds, analytics: true });
+		// Algo B, product B (Integrations), n8n code I, 5 version chars, no feature.
+		expect(out.secure_url).toMatch(
+			/^https:\/\/res\.cloudinary\.com\/demo\/image\/upload\/f_auto\/q_auto\/sample\?_a=BBI[A-Za-z0-9+/]{5}0$/,
+		);
+	});
+
+	it('treats an undefined credential analytics flag as on (opt-out default)', async () => {
+		const { ctx } = makeCtx({ params: { transformPublicId: 'sample' } });
+		// Credentials saved before the toggle existed have no `analytics` field.
+		const [out] = await optimizeImage(ctx, 0, {
+			cloudName: 'demo',
+			apiKey: 'key123',
+			apiSecret: 'secret123',
+		});
+		expect(out.secure_url as string).toContain('?_a=');
+	});
+});
+
 describe('transform delivery type and additional options', () => {
 	it('threads the top-level delivery type into the URL path', async () => {
 		const { ctx } = makeCtx({
@@ -153,6 +175,35 @@ describe('transform:resizeImage', () => {
 		});
 		const [out] = await resizeImage(ctx, 0, testCreds);
 		expect(out.transformation).toBe('b_lightblue,c_pad,w_400,h_300');
+	});
+
+	it('emits b_gen_fill,c_pad for a generative-fill pad background', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				resizeWidth: 1200,
+				resizeHeight: 628,
+				resizeFit: 'pad',
+				resizePadBackground: 'gen_fill',
+			},
+		});
+		const [out] = await resizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_gen_fill,c_pad,w_1200,h_628');
+	});
+
+	it('URL-encodes a generative-fill prompt on the pad background', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				resizeWidth: 1200,
+				resizeHeight: 628,
+				resizeFit: 'pad',
+				resizePadBackground: 'gen_fill',
+				resizePadGenFillPrompt: 'a sandy beach',
+			},
+		});
+		const [out] = await resizeImage(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_gen_fill:prompt_a%20sandy%20beach,c_pad,w_1200,h_628');
 	});
 
 	it('ignores a pad background for a non-pad fit mode', async () => {
@@ -690,6 +741,29 @@ describe('transform:multiStep', () => {
 		});
 		const [out] = await multiStep(ctx, 0, testCreds);
 		expect(out.transformation).toBe('b_rgb:777,c_pad,w_400,h_300');
+	});
+
+	it('resize step supports a generative-fill pad background with a prompt', async () => {
+		const { ctx } = makeCtx({
+			params: {
+				transformPublicId: 'sample',
+				multiStepResourceType: 'image',
+				transformSteps: {
+					step: [
+						{
+							stepType: 'resize',
+							width: 1200,
+							height: 628,
+							fit: 'pad',
+							padBackground: 'gen_fill',
+							padGenFillPrompt: 'a sandy beach',
+						},
+					],
+				},
+			},
+		});
+		const [out] = await multiStep(ctx, 0, testCreds);
+		expect(out.transformation).toBe('b_gen_fill:prompt_a%20sandy%20beach,c_pad,w_1200,h_628');
 	});
 
 	it('crop by dimensions emits c_fill,g_<focus>,w_,h_', async () => {

@@ -11,6 +11,7 @@ import {
 	buildResourceDeleteUrl,
 	buildResourceUpdateUrl,
 	buildDeliveryUrl,
+	buildAnalyticsSignature,
 	joinTransformation,
 	splitCsvIds,
 } from './cloudinary.utils';
@@ -581,6 +582,95 @@ describe('buildDeliveryUrl', () => {
 				}),
 			).toBe('https://res.cloudinary.com/demo/image/upload/weird?name');
 		});
+	});
+
+	describe('analytics signature', () => {
+		// The signature is fixed per package/Node version, so assert its shape rather than
+		// an exact value: algo B, product B (Integrations), n8n code I, 5 version chars, no
+		// feature (0). buildAnalyticsSignature has the exact-value coverage.
+		const SIG = /\?_a=BBI[A-Za-z0-9+/]{5}0$/;
+
+		it('appends the signature when analytics is on', () => {
+			const url = buildDeliveryUrl({
+				cloudName: 'demo',
+				resourceType: 'image',
+				type: 'upload',
+				transformation: 'f_auto/q_auto',
+				publicId: 'sample',
+				analytics: true,
+			});
+			expect(url).toMatch(SIG);
+			// ...and the base URL is untouched (SIG only checks the trailing `?_a=`).
+			expect(url.split('?_a=')[0]).toBe(
+				'https://res.cloudinary.com/demo/image/upload/f_auto/q_auto/sample',
+			);
+		});
+
+		it('omits the signature by default (opt-in at the builder level)', () => {
+			expect(
+				buildDeliveryUrl({ cloudName: 'demo', resourceType: 'image', type: 'upload', publicId: 'sample' }),
+			).toBe('https://res.cloudinary.com/demo/image/upload/sample');
+		});
+
+		it('omits the signature when analytics is off', () => {
+			expect(
+				buildDeliveryUrl({
+					cloudName: 'demo',
+					resourceType: 'image',
+					type: 'upload',
+					publicId: 'sample',
+					analytics: false,
+				}),
+			).not.toMatch(SIG);
+		});
+
+		it('suppresses analytics when the public_id carries a `?` (would break the URL)', () => {
+			// A fetch source with its own query string: the `?` collides with `?_a=`.
+			const url = buildDeliveryUrl({
+				cloudName: 'demo',
+				resourceType: 'image',
+				type: 'fetch',
+				publicId: 'https://example.com/photo.jpg?sig=abc',
+				analytics: true,
+			});
+			expect(url).not.toContain('_a=');
+			expect(url).toBe(
+				'https://res.cloudinary.com/demo/image/fetch/https://example.com/photo.jpg%3Fsig%3Dabc',
+			);
+		});
+	});
+});
+
+describe('buildAnalyticsSignature', () => {
+	it("encodes versions per the spec's base-64 packing (worked example)", () => {
+		// Spec: SDK version 1.24.0 → "Alh", tech version 12 → "AM". Here with an explicit
+		// integration code (X) and feature (Y) to pin every position.
+		expect(
+			buildAnalyticsSignature({
+				sdkVersion: '1.24.0',
+				techVersion: '12',
+				integrationCode: 'X',
+				feature: 'Y',
+			}),
+		).toBe('BBXAlhAMY');
+	});
+
+	it('defaults to algo B, product B (Integrations), the n8n code, and no feature', () => {
+		// SDK 1.0.0 → "AAB", Node 22.12 → "TG".
+		expect(buildAnalyticsSignature({ sdkVersion: '1.0.0', techVersion: '22.12' })).toBe(
+			'BBIAABTG0',
+		);
+	});
+
+	it('ignores a trailing patch on the tech version (major.minor only)', () => {
+		expect(buildAnalyticsSignature({ sdkVersion: '1.0.0', techVersion: '22.12.7' })).toBe(
+			'BBIAABTG0',
+		);
+	});
+
+	it("returns the spec's 'E' sentinel when a version component can't be encoded", () => {
+		// A 3-digit component overflows the 2-digit-per-part budget.
+		expect(buildAnalyticsSignature({ sdkVersion: '1.2.300', techVersion: '20.11' })).toBe('E');
 	});
 });
 

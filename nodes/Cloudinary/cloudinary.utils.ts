@@ -64,6 +64,9 @@ export interface DeliveryUrlOptions {
 	privateCdn?: boolean;
 	/** Custom delivery hostname (CNAME / secure_distribution). Overrides the host. */
 	secureDistribution?: string;
+	/** Append the `?_a=` analytics signature. Off by default so the bare builder stays
+	 * pure; the Transform flow enables it from the credential toggle. */
+	analytics?: boolean;
 }
 
 /**
@@ -88,6 +91,77 @@ const normalizeDeliveryHost = (host: string): string =>
  */
 const smartEscapeFetchUrl = (source: string): string =>
 	source.replace(/[^A-Za-z0-9_.\-/:]+/g, (run) => encodeURIComponent(run));
+
+// Delivery-URL analytics: the obfuscated `?_a=` param the SDKs append so Cloudinary
+// can measure which integration built a URL. CDN-stripped, zero delivery impact. We
+// emit "Algorithm B": algoVersion(B) product(B) code sdkVer(3) techVer(2) feature.
+// Spec: Confluence "SDK SPEC - URL analytics"; integration code from its Appendix C.
+
+/** *Standard* base64 (`+`/`/` at 62/63), NOT URL-safe — must byte-match the SDKs' table
+ * and the log parser (`SdkTokenDecoder.B64CHARS` in CloudinaryLtd/analytics). */
+const ANALYTICS_BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const ANALYTICS_ALGO_VERSION = 'B';
+/** Product char: `A` = Classic SDKs, `B` = Integrations (signals an Appendix C code). */
+const ANALYTICS_PRODUCT_INTEGRATIONS = 'B';
+/** n8n's integration code in the spec's Appendix C. */
+const ANALYTICS_INTEGRATION_CODE = 'I';
+/** No per-URL feature is tracked; the spec's default feature char is `0`. */
+const ANALYTICS_NO_FEATURE = '0';
+
+/**
+ * Pack a dotted version into the spec's base64. `parts` = leading components kept
+ * (3 → SDK semver, 2 → platform major.minor): each padded to 2 digits, reversed
+ * (patch→major), packed into `parts*6` bits, split into 6-bit symbols. Throws on a
+ * >2-digit part (caller maps to the `E` sentinel). E.g. `1.24.0`→`Alh`, `12`→`AM`.
+ */
+const encodeAnalyticsVersion = (version: string, parts: number): string => {
+	const components = version.split('.').slice(0, parts);
+	while (components.length < parts) components.push('0');
+	const padded = components.map((c) => {
+		if (!/^\d{1,2}$/.test(c)) throw new Error(`Unencodable version component: "${c}"`);
+		return c.padStart(2, '0');
+	});
+	const packed = Number(padded.reverse().join(''));
+	const binary = packed.toString(2).padStart(parts * 6, '0');
+	const symbols = binary.match(/.{6}/g) ?? [];
+	return symbols.map((sixBits) => ANALYTICS_BASE64[parseInt(sixBits, 2)]).join('');
+};
+
+export interface AnalyticsSignatureOptions {
+	/** This package's version (the "SDK version"). */
+	sdkVersion: string;
+	/** The host platform version (`process.versions.node`). */
+	techVersion: string;
+	/** Override the integration code (defaults to n8n's Appendix C code). */
+	integrationCode?: string;
+	/** Override the feature char (defaults to none). */
+	feature?: string;
+}
+
+/**
+ * Build the `_a` signature (Algorithm B). Returns the spec's `E` sentinel if a version
+ * can't be encoded, so a bad version degrades rather than breaks the URL.
+ */
+export const buildAnalyticsSignature = (opts: AnalyticsSignatureOptions): string => {
+	try {
+		return (
+			ANALYTICS_ALGO_VERSION +
+			ANALYTICS_PRODUCT_INTEGRATIONS +
+			(opts.integrationCode ?? ANALYTICS_INTEGRATION_CODE) +
+			encodeAnalyticsVersion(opts.sdkVersion, 3) +
+			encodeAnalyticsVersion(opts.techVersion, 2) +
+			(opts.feature ?? ANALYTICS_NO_FEATURE)
+		);
+	} catch {
+		return 'E';
+	}
+};
+
+/** This node's signature, computed once from the package + Node.js versions. */
+const DELIVERY_ANALYTICS_SIGNATURE = buildAnalyticsSignature({
+	sdkVersion: version,
+	techVersion: process.versions.node,
+});
 
 /**
  * Build a Cloudinary delivery URL — the "third flow" that makes no API call. The
@@ -133,7 +207,15 @@ export const buildDeliveryUrl = (opts: DeliveryUrlOptions): string => {
 		idWithFormat,
 	].filter((s): s is string => s !== undefined && s !== '');
 
-	return `https://${host}/${segments.join('/')}`;
+	const url = `https://${host}/${segments.join('/')}`;
+
+	// Skip when the public_id contains `?` (fetch/upload-mapping sources): it collides
+	// with the `?_a=` separator and breaks some origins, matching the SDKs (spec
+	// "Limitations"). Checks the raw public_id, before fetch smart-escaping.
+	if (opts.analytics && !publicId.includes('?')) {
+		return `${url}?_a=${DELIVERY_ANALYTICS_SIGNATURE}`;
+	}
+	return url;
 };
 
 /**

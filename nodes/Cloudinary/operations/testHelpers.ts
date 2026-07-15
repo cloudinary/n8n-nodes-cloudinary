@@ -6,6 +6,9 @@ export const testCreds: CloudinaryCredentials = {
 	cloudName: 'demo',
 	apiKey: 'key123',
 	apiSecret: 'secret123',
+	// Off by default so delivery-URL assertions stay free of the version-dependent
+	// `?_a=` analytics suffix; the analytics-threading test flips it on explicitly.
+	analytics: false,
 };
 
 export interface MockCtxOptions {

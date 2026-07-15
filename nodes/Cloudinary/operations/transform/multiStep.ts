@@ -78,7 +78,11 @@ function stepComponents(step: IDataObject, resourceType: string): string[] {
 				width: num(step.width),
 				height: num(step.height),
 				fit: str(step.fit) || 'limit',
-				background: padBackgroundSuffix(str(step.padBackground), str(step.padBackgroundColor)),
+				background: padBackgroundSuffix(
+					str(step.padBackground),
+					str(step.padBackgroundColor),
+					str(step.padGenFillPrompt),
+				),
 			});
 		case 'crop': {
 			const cropBy = str(step.cropMode) || 'dimensions';
