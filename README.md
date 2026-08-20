@@ -77,19 +77,38 @@ The **AI-Generated Content** options let the player generate content on demand �
 ## Authentication 
 ### Using API key
 
-To configure this credential, you'll need a [Cloudinary Account](https://cloudinary.com/users/register_free) and:
+To configure this credential, you'll need a [Cloudinary account](https://cloudinary.com/users/register_free) and:
 
 - A **Cloud name**
 - An **API Key**
 - An **API Secret**
 
-If you're a user with a Master admin, Admin, or Technical admin role, you can find your API keys and other credentials on the API Keys page of the Cloudinary Console Settings:
+#### Get your credentials from the Console
 
-1. Navigate to the API Keys pages in the [settings page](https://console.cloudinary.com/settings/api-keys).
-2. Click on **+ Generate New API Key**.
-3. Copy the API Key and API Secret.
-4. From the top of the page copy the **Cloud name**.
-5. Enter the cloud name, api key and api secret to your n8n credential.
+1. [Create a free Cloudinary account](https://cloudinary.com/users/register_free) — you can sign up with Google, GitHub, or an email address. Skip to step 2 if you already have one.
+2. In the [Cloudinary Console](https://console.cloudinary.com), go to **Settings > [API Keys](https://console.cloudinary.com/settings/api-keys)**. Viewing keys requires the Master admin, Admin, or Technical admin role.
+3. Copy the **API Key** and **API Secret**. A new account already ships with an active key — use **Generate New Access Key** only if you'd rather issue a dedicated key for n8n.
+4. Copy the **Cloud name** from the top of the page (it's also on the Console Dashboard).
+5. Enter the cloud name, API key, and API secret into your n8n credential.
+
+Treat the API secret like a password: it authenticates every signed Upload and Admin API call this node makes, and should never leave your organization.
+
+#### Or ask an agent to provision a cloud for you
+
+If you're setting this up alongside a coding agent — or you just want working credentials in under a minute without signing up first — ask an agent to run this, and it will provision a [Claimable Cloud](https://cloudinary.com/documentation/claimable_cloud_provisioning) for you (you can also run it yourself):
+
+```bash
+npx @cloudinary/cloud
+```
+
+This creates a real cloud with a working cloud name, API key, and API secret, and prints a **claim URL**. Open it, confirm from the verification email, and the cloud becomes a permanent free account — same credentials, and every asset you already uploaded is kept.
+
+Two caveats matter for n8n specifically:
+
+- **Delivery is IP-restricted until you claim.** Requests for your media from any address outside the IPs registered at provisioning time are blocked at the CDN edge. Uploads, transformations, and API calls are unaffected, but the delivery URLs the **Transform** operations build won't load for anyone else until you claim the cloud.
+- **Unclaimed clouds expire after 24 hours** and are deleted along with their assets, so claim before you build anything you want to keep.
+
+For any workflow you intend to keep running, claim the cloud (or [sign up](https://cloudinary.com/users/register_free) the normal way) and use those credentials.
 
 #### Private CDN / custom delivery hostname (advanced)
 
