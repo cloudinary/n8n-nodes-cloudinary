@@ -3,6 +3,9 @@ import {
 	INodeTypeDescription,
 	IExecuteFunctions,
 	INodeExecutionData,
+	JsonObject,
+	NodeApiError,
+	NodeConnectionTypes,
 	NodeOperationError,
 } from 'n8n-workflow';
 import { cloudinaryProperties } from './descriptions';
@@ -13,7 +16,7 @@ export class Cloudinary implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Cloudinary',
 		name: 'cloudinary',
-		icon: 'file:cloudinary.svg',
+		icon: { light: 'file:cloudinary.svg', dark: 'file:cloudinary.dark.svg' },
 		group: ['transform'],
 		// v1 exposed the Video Player as flat `player*` params; v2 regrouped them into
 		// collections (see widget.fields.ts). Both schemas ship side by side, gated by
@@ -32,8 +35,8 @@ export class Cloudinary implements INodeType {
 		defaults: {
 			name: 'Cloudinary',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: CREDENTIAL_TYPE,
@@ -84,7 +87,12 @@ export class Cloudinary implements INodeType {
 					});
 					continue;
 				}
-				throw error;
+				// Both constructors pass an already-wrapped error of their own type
+				// through untouched, so handler-thrown errors keep their context.
+				if (error instanceof NodeApiError) {
+					throw new NodeApiError(this.getNode(), error as unknown as JsonObject, { itemIndex: i });
+				}
+				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
 			}
 		}
 

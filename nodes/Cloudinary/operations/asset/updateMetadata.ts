@@ -13,7 +13,7 @@ export const updateMetadata: OperationHandler = async (ctx, i, creds) => {
 	const updateOptions = ctx.getNodeParameter('updateOptions', i, {}) as IDataObject;
 
 	const body: IDataObject = {
-		metadata: metadataToPipeString(structuredMetadata),
+		metadata: metadataToPipeString(structuredMetadata, ctx.getNode()),
 		...updateOptions,
 	};
 

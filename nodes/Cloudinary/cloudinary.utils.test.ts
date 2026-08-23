@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { IDataObject } from 'n8n-workflow';
+import type { IDataObject, INode } from 'n8n-workflow';
 import {
 	buildSearchExpression,
 	createMultipartBody,
@@ -258,70 +258,80 @@ describe('generateCloudinarySignature', () => {
 });
 
 describe('metadataToPipeString', () => {
+	const node = {
+		id: '1',
+		name: 'Cloudinary',
+		type: 'n8n-nodes-cloudinary.cloudinary',
+		typeVersion: 2,
+		position: [0, 0],
+		parameters: {},
+	} as INode;
+	const toPipeString = (input: IDataObject | string) => metadataToPipeString(input, node);
+
 	it('joins scalar key/value pairs with pipes', () => {
-		expect(metadataToPipeString({ a: '1', b: '2' })).toBe('a=1|b=2');
+		expect(toPipeString({ a: '1', b: '2' })).toBe('a=1|b=2');
 	});
 
 	it('renders array values as a bracketed list of quoted strings', () => {
-		expect(metadataToPipeString({ colors: ['red', 'blue'] })).toBe('colors=["red","blue"]');
+		expect(toPipeString({ colors: ['red', 'blue'] })).toBe('colors=["red","blue"]');
 	});
 
 	it('quotes numeric array elements as strings', () => {
-		expect(metadataToPipeString({ sizes: [1, 2] } as unknown as IDataObject)).toBe(
+		expect(toPipeString({ sizes: [1, 2] } as unknown as IDataObject)).toBe(
 			'sizes=["1","2"]',
 		);
 	});
 
 	it('renders an empty array as empty brackets', () => {
-		expect(metadataToPipeString({ tags: [] })).toBe('tags=[]');
+		expect(toPipeString({ tags: [] })).toBe('tags=[]');
 	});
 
 	it('parses a JSON string input', () => {
-		expect(metadataToPipeString('{"a":"1","b":"2"}')).toBe('a=1|b=2');
+		expect(toPipeString('{"a":"1","b":"2"}')).toBe('a=1|b=2');
 	});
 
 	it('returns an empty string for an empty object', () => {
-		expect(metadataToPipeString({})).toBe('');
+		expect(toPipeString({})).toBe('');
 	});
 
 	it('throws on invalid JSON string input', () => {
-		expect(() => metadataToPipeString('{not valid}')).toThrow('Invalid JSON for structured metadata');
+		expect(() => toPipeString('{not valid}')).toThrow('Invalid JSON for structured metadata');
 	});
 
 	it('escapes the pipe delimiter in a scalar value', () => {
-		expect(metadataToPipeString({ note: 'a|b' })).toBe('note=a\\|b');
+		expect(toPipeString({ note: 'a|b' })).toBe('note=a\\|b');
 	});
 
 	it('escapes the equals delimiter in a scalar value', () => {
-		expect(metadataToPipeString({ eq: 'x=y' })).toBe('eq=x\\=y');
+		expect(toPipeString({ eq: 'x=y' })).toBe('eq=x\\=y');
 	});
 
 	it('escapes both delimiters and keeps following pairs separable', () => {
-		expect(metadataToPipeString({ a: 'one=two|three', b: 'ok' })).toBe('a=one\\=two\\|three|b=ok');
+		expect(toPipeString({ a: 'one=two|three', b: 'ok' })).toBe('a=one\\=two\\|three|b=ok');
 	});
 
 	it('escapes double quotes in a scalar value', () => {
-		expect(metadataToPipeString({ q: 'say "hi"' })).toBe('q=say \\"hi\\"');
+		expect(toPipeString({ q: 'say "hi"' })).toBe('q=say \\"hi\\"');
 	});
 
 	it('escapes the delimiters (= | ") inside array elements and quote-wraps them', () => {
-		expect(metadataToPipeString({ tags: ['a|b', 'c=d', 'e"f'] })).toBe(
+		expect(toPipeString({ tags: ['a|b', 'c=d', 'e"f'] })).toBe(
 			'tags=["a\\|b","c\\=d","e\\"f"]',
 		);
 	});
 
 	it('keeps following pairs separable when an array element contains a pipe', () => {
-		expect(metadataToPipeString({ a: ['x|y'], b: 'ok' })).toBe('a=["x\\|y"]|b=ok');
+		expect(toPipeString({ a: ['x|y'], b: 'ok' })).toBe('a=["x\\|y"]|b=ok');
 	});
 
 	it('skips null and undefined values rather than emitting key=null', () => {
-		expect(metadataToPipeString({ a: '1', b: null, c: undefined, d: '2' } as IDataObject)).toBe(
+		expect(toPipeString({ a: '1', b: null, c: undefined, d: '2' } as IDataObject)).toBe(
 			'a=1|d=2',
 		);
 	});
 
 	it('stringifies non-string scalars (numbers, booleans)', () => {
-		expect(metadataToPipeString({ n: 5, flag: true } as unknown as IDataObject)).toBe(
+		expect(toPipeString({ n: 5, flag: true } as unknown as IDataObject)).toBe(
 			'n=5|flag=true',
 		);
 	});

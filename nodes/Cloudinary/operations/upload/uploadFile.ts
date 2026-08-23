@@ -16,6 +16,7 @@ export const uploadFile: OperationHandler = async (ctx, i, creds) => {
 	if (additionalFields.metadata) {
 		additionalFields.metadata = metadataToPipeString(
 			additionalFields.metadata as IDataObject | string,
+			ctx.getNode(),
 		);
 	}
 
