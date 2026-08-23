@@ -35,6 +35,222 @@ const SHOW_V1: IDisplayOptions = { show: { ...RES_OP, '@version': [1] } };
 // the v2 player schema keeps showing these without re-gating.
 const SHOW_V2: IDisplayOptions = { show: { ...RES_OP, '@version': [{ _cnd: { gte: 2 } }] } };
 
+// The v2 collections' inner options are kept as named consts: the alphabetize
+// lint rule only inspects inline array literals, so each list can keep its
+// curated, purpose-driven order without a suppression comment.
+
+// Ordered by relevance (autoplay/sound/loop first), not alphabetically.
+const PLAYBACK_OPTIONS: INodeProperties[] = [
+	{
+		displayName: 'Autoplay Mode',
+		name: 'autoplayMode',
+		type: 'options',
+		options: [
+			{ name: 'Never', value: '', description: 'Do not autoplay (player default)' },
+			{ name: 'Always', value: 'always', description: 'Autoplay as soon as the player loads' },
+			{ name: 'On Scroll', value: 'on-scroll', description: 'Autoplay when the player scrolls into view' },
+		],
+		default: '',
+		description: 'When the video should start playing automatically. Most browsers require the player to be muted for autoplay to work.',
+	},
+	{
+		displayName: 'Muted',
+		name: 'muted',
+		type: 'boolean',
+		default: false,
+		description: 'Whether the player starts muted',
+	},
+	{
+		displayName: 'Loop',
+		name: 'loop',
+		type: 'boolean',
+		default: false,
+		description: 'Whether the video restarts from the beginning when it ends',
+	},
+	{
+		displayName: 'Plays Inline',
+		name: 'playsinline',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to prevent the player from entering fullscreen automatically on iOS when playback starts',
+	},
+	{
+		displayName: 'Show Controls',
+		name: 'controls',
+		type: 'boolean',
+		default: true,
+		description: 'Whether to show the built-in playback controls (play, pause, volume, fullscreen, etc.)',
+	},
+	{
+		displayName: 'Big Play Button',
+		name: 'bigPlayButton',
+		type: 'boolean',
+		default: true,
+		description: 'Whether to show a larger central play button when the video is paused',
+	},
+];
+
+// Ordered Fluid → Width/Height → Aspect Ratio → Crop Mode so the dependent
+// fields read top-down; not alphabetized.
+const LAYOUT_OPTIONS: INodeProperties[] = [
+	{
+		displayName: 'Fluid',
+		name: 'fluid',
+		type: 'boolean',
+		default: false,
+		description: 'Whether the player resizes responsively to fill its container. When on, Width and Height are replaced by an aspect-ratio CSS style.',
+	},
+	{
+		displayName: 'Width',
+		name: 'width',
+		type: 'number',
+		default: 0,
+		description: 'Player width in pixels. Leave 0 for the default (640 px).',
+		displayOptions: { show: { fluid: [false] } },
+	},
+	{
+		displayName: 'Height',
+		name: 'height',
+		type: 'number',
+		default: 0,
+		description: 'Player height in pixels. Leave 0 for the default (360 px).',
+		displayOptions: { show: { fluid: [false] } },
+	},
+	{
+		displayName: 'Aspect Ratio',
+		name: 'aspectRatio',
+		type: 'options',
+		options: [
+			{ name: '1:1', value: '1:1' },
+			{ name: '16:9', value: '16:9' },
+			{ name: '9:16', value: '9:16' },
+			{ name: 'Default', value: '' },
+		],
+		default: '',
+		description: 'Player aspect ratio. Leave unset to use the video\'s natural dimensions.',
+	},
+	{
+		displayName: 'Crop Mode',
+		name: 'cropMode',
+		type: 'options',
+		options: [
+			{ name: 'Smart', value: 'smart', description: 'Keep the most important content in view (player default)' },
+			{ name: 'Fill', value: 'fill', description: 'Cover the frame, cropping as needed' },
+			{ name: 'Pad', value: 'pad', description: 'Fit the whole video within the frame and add padding' },
+		],
+		default: 'smart',
+		description: 'How the player resizes the video to the chosen Aspect Ratio. Only relevant when Aspect Ratio is set (applies to progressive delivery, not adaptive streaming). If your Transformation already crops the video to a shape, applying an Aspect Ratio here crops it a second time — leave Aspect Ratio unset to keep just your transformation\'s framing. See https://cloudinary.com/documentation/video_player_customization.',
+		displayOptions: { show: { aspectRatio: ['1:1', '16:9', '9:16'] } },
+	},
+];
+
+// Ordered for readability, not alphabetized: the captions toggle leads, with its
+// dependent Label and translation Languages grouped right under it, then the
+// title/description toggles, then chapters + its dependent button.
+const AI_CONTENT_OPTIONS: INodeProperties[] = [
+	{
+		displayName: 'Generate Captions',
+		name: 'generateCaptions',
+		type: 'boolean',
+		default: false,
+		description:
+			'Whether to auto-generate captions from the spoken audio, shown as a track the viewer can toggle on or off. The captions are in the video\'s original spoken language — to also offer captions translated into other languages, use Subtitle Languages below.',
+	},
+	{
+		displayName: 'Captions Label',
+		name: 'captionsLabel',
+		type: 'string',
+		default: 'English (auto)',
+		description:
+			'The name shown for the auto-generated captions track in the player\'s captions menu. Set this to match the video\'s spoken language (e.g. "English", "Español").',
+		displayOptions: { show: { generateCaptions: [true] } },
+	},
+	{
+		displayName: 'Subtitle Languages',
+		name: 'subtitleLanguages',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. es, fr-FR, de',
+		description:
+			'Optional. Leave empty for captions in the original language only. To also offer the captions translated into other languages, enter target language codes separated by commas — each adds a translated subtitle track the viewer can pick. Translation requires the Google Translate add-on on your account (register at https://console.cloudinary.com/settings/addons, then enable it under Settings → Security → Unsigned add-on transformations). Captions in the original language need no add-on.',
+		displayOptions: { show: { generateCaptions: [true] } },
+	},
+	{
+		displayName: 'Generate Title',
+		name: 'generateTitle',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to show an AI-generated title for the video in the player',
+	},
+	{
+		displayName: 'Generate Description',
+		name: 'generateDescription',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to show an AI-generated description for the video in the player',
+	},
+	{
+		displayName: 'Generate Chapters',
+		name: 'generateChapters',
+		type: 'boolean',
+		default: false,
+		description:
+			'Whether to auto-generate chapter markers so viewers can jump between sections of the video',
+	},
+	{
+		displayName: 'Show Chapters Button',
+		name: 'chaptersButton',
+		type: 'boolean',
+		default: true,
+		description:
+			'Whether to show the chapters button in the player, which opens the list of chapters so viewers can navigate. Shown only when Generate Chapters is on; turn off to keep the chapters available without surfacing the button.',
+		displayOptions: { show: { generateChapters: [true] } },
+	},
+];
+
+// Skin first (it sets the baseline), then the color/font overrides; not alphabetized.
+const APPEARANCE_OPTIONS: INodeProperties[] = [
+	{
+		displayName: 'Skin',
+		name: 'skin',
+		type: 'options',
+		options: [
+			{ name: 'Dark', value: 'dark' },
+			{ name: 'Light', value: 'light' },
+		],
+		default: 'dark',
+		description: 'Player theme',
+	},
+	{
+		displayName: 'Base Color',
+		name: 'baseColor',
+		type: 'color',
+		default: '',
+		description: 'Player base (background) color, as a hex value',
+	},
+	{
+		displayName: 'Accent Color',
+		name: 'accentColor',
+		type: 'color',
+		default: '',
+		description: 'Player accent (highlight) color, as a hex value',
+	},
+	{
+		displayName: 'Text Color',
+		name: 'textColor',
+		type: 'color',
+		default: '',
+		description: 'Player text color, as a hex value',
+	},
+	{
+		displayName: 'Font Face',
+		name: 'fontFace',
+		type: 'string',
+		default: '',
+		description: 'The font applied to player text elements (titles, descriptions, recommendations, time counter). Accepts a Google Font name.',
+	},
+];
+
 export const widgetFields: INodeProperties[] = [
 	// ── Essentials (top-level, shared by all versions) ──────────────────────────
 	{
@@ -84,57 +300,7 @@ export const widgetFields: INodeProperties[] = [
 		default: {},
 		description: 'How and when the video plays',
 		displayOptions: SHOW_V2,
-		// Ordered by relevance (autoplay/sound/loop first), not alphabetically.
-		// eslint-disable-next-line n8n-nodes-base/node-param-collection-type-unsorted-items
-		options: [
-			{
-				displayName: 'Autoplay Mode',
-				name: 'autoplayMode',
-				type: 'options',
-				options: [
-					{ name: 'Never', value: '', description: 'Do not autoplay (player default)' },
-					{ name: 'Always', value: 'always', description: 'Autoplay as soon as the player loads' },
-					{ name: 'On Scroll', value: 'on-scroll', description: 'Autoplay when the player scrolls into view' },
-				],
-				default: '',
-				description: 'When the video should start playing automatically. Most browsers require the player to be muted for autoplay to work.',
-			},
-			{
-				displayName: 'Muted',
-				name: 'muted',
-				type: 'boolean',
-				default: false,
-				description: 'Whether the player starts muted',
-			},
-			{
-				displayName: 'Loop',
-				name: 'loop',
-				type: 'boolean',
-				default: false,
-				description: 'Whether the video restarts from the beginning when it ends',
-			},
-			{
-				displayName: 'Plays Inline',
-				name: 'playsinline',
-				type: 'boolean',
-				default: false,
-				description: 'Whether to prevent the player from entering fullscreen automatically on iOS when playback starts',
-			},
-			{
-				displayName: 'Show Controls',
-				name: 'controls',
-				type: 'boolean',
-				default: true,
-				description: 'Whether to show the built-in playback controls (play, pause, volume, fullscreen, etc.)',
-			},
-			{
-				displayName: 'Big Play Button',
-				name: 'bigPlayButton',
-				type: 'boolean',
-				default: true,
-				description: 'Whether to show a larger central play button when the video is paused',
-			},
-		],
+		options: PLAYBACK_OPTIONS,
 	},
 
 	// ── Size & Layout ───────────────────────────────────────────────────────────
@@ -146,60 +312,7 @@ export const widgetFields: INodeProperties[] = [
 		default: {},
 		description: 'The player\'s dimensions and shape',
 		displayOptions: SHOW_V2,
-		// Ordered Fluid → Width/Height → Aspect Ratio → Crop Mode so the dependent
-		// fields read top-down; not alphabetized.
-		// eslint-disable-next-line n8n-nodes-base/node-param-collection-type-unsorted-items
-		options: [
-			{
-				displayName: 'Fluid',
-				name: 'fluid',
-				type: 'boolean',
-				default: false,
-				description: 'Whether the player resizes responsively to fill its container. When on, Width and Height are replaced by an aspect-ratio CSS style.',
-			},
-			{
-				displayName: 'Width',
-				name: 'width',
-				type: 'number',
-				default: 0,
-				description: 'Player width in pixels. Leave 0 for the default (640 px).',
-				displayOptions: { show: { fluid: [false] } },
-			},
-			{
-				displayName: 'Height',
-				name: 'height',
-				type: 'number',
-				default: 0,
-				description: 'Player height in pixels. Leave 0 for the default (360 px).',
-				displayOptions: { show: { fluid: [false] } },
-			},
-			{
-				displayName: 'Aspect Ratio',
-				name: 'aspectRatio',
-				type: 'options',
-				options: [
-					{ name: '1:1', value: '1:1' },
-					{ name: '16:9', value: '16:9' },
-					{ name: '9:16', value: '9:16' },
-					{ name: 'Default', value: '' },
-				],
-				default: '',
-				description: 'Player aspect ratio. Leave unset to use the video\'s natural dimensions.',
-			},
-			{
-				displayName: 'Crop Mode',
-				name: 'cropMode',
-				type: 'options',
-				options: [
-					{ name: 'Smart', value: 'smart', description: 'Keep the most important content in view (player default)' },
-					{ name: 'Fill', value: 'fill', description: 'Cover the frame, cropping as needed' },
-					{ name: 'Pad', value: 'pad', description: 'Fit the whole video within the frame and add padding' },
-				],
-				default: 'smart',
-				description: 'How the player resizes the video to the chosen Aspect Ratio. Only relevant when Aspect Ratio is set (applies to progressive delivery, not adaptive streaming). If your Transformation already crops the video to a shape, applying an Aspect Ratio here crops it a second time — leave Aspect Ratio unset to keep just your transformation\'s framing. See https://cloudinary.com/documentation/video_player_customization.',
-				displayOptions: { show: { aspectRatio: ['1:1', '16:9', '9:16'] } },
-			},
-		],
+		options: LAYOUT_OPTIONS,
 	},
 
 	// ── AI-Generated Content (the flagship capability) ───────────────────────────
@@ -212,70 +325,7 @@ export const widgetFields: INodeProperties[] = [
 		description:
 			'Have the Cloudinary Video Player generate captions, a title, a description, and chapter markers from the video using AI — no files to author. Generation happens the first time the content is requested in the browser, only for content that does not already exist, and the result is cached. It requires the video audio to contain dialogue. These options affect the generated player config, not the preview embed URL. Learn more: https://cloudinary.com/documentation/video_player_customization.',
 		displayOptions: SHOW_V2,
-		// Ordered for readability, not alphabetized: the captions toggle leads, with its
-		// dependent Label and translation Languages grouped right under it, then the
-		// title/description toggles, then chapters + its dependent button.
-		// eslint-disable-next-line n8n-nodes-base/node-param-collection-type-unsorted-items
-		options: [
-			{
-				displayName: 'Generate Captions',
-				name: 'generateCaptions',
-				type: 'boolean',
-				default: false,
-				description:
-					'Whether to auto-generate captions from the spoken audio, shown as a track the viewer can toggle on or off. The captions are in the video\'s original spoken language — to also offer captions translated into other languages, use Subtitle Languages below.',
-			},
-			{
-				displayName: 'Captions Label',
-				name: 'captionsLabel',
-				type: 'string',
-				default: 'English (auto)',
-				description:
-					'The name shown for the auto-generated captions track in the player\'s captions menu. Set this to match the video\'s spoken language (e.g. "English", "Español").',
-				displayOptions: { show: { generateCaptions: [true] } },
-			},
-			{
-				displayName: 'Subtitle Languages',
-				name: 'subtitleLanguages',
-				type: 'string',
-				default: '',
-				placeholder: 'e.g. es, fr-FR, de',
-				description:
-					'Optional. Leave empty for captions in the original language only. To also offer the captions translated into other languages, enter target language codes separated by commas — each adds a translated subtitle track the viewer can pick. Translation requires the Google Translate add-on on your account (register at https://console.cloudinary.com/settings/addons, then enable it under Settings → Security → Unsigned add-on transformations). Captions in the original language need no add-on.',
-				displayOptions: { show: { generateCaptions: [true] } },
-			},
-			{
-				displayName: 'Generate Title',
-				name: 'generateTitle',
-				type: 'boolean',
-				default: false,
-				description: 'Whether to show an AI-generated title for the video in the player',
-			},
-			{
-				displayName: 'Generate Description',
-				name: 'generateDescription',
-				type: 'boolean',
-				default: false,
-				description: 'Whether to show an AI-generated description for the video in the player',
-			},
-			{
-				displayName: 'Generate Chapters',
-				name: 'generateChapters',
-				type: 'boolean',
-				default: false,
-				description:
-					'Whether to auto-generate chapter markers so viewers can jump between sections of the video',
-			},
-			{
-				displayName: 'Show Chapters Button',
-				name: 'chaptersButton',
-				type: 'boolean',
-				default: true,
-				description:
-					'Whether to show the chapters button in the player, which opens the list of chapters so viewers can navigate. Shown only when Generate Chapters is on; turn off to keep the chapters available without surfacing the button.',
-				displayOptions: { show: { generateChapters: [true] } },
-			},
-		],
+		options: AI_CONTENT_OPTIONS,
 	},
 
 	// ── Appearance ────────────────────────────────────────────────────────────
@@ -287,49 +337,7 @@ export const widgetFields: INodeProperties[] = [
 		default: {},
 		description: 'The player\'s theme, colors, and font',
 		displayOptions: SHOW_V2,
-		// Skin first (it sets the baseline), then the color/font overrides; not alphabetized.
-		// eslint-disable-next-line n8n-nodes-base/node-param-collection-type-unsorted-items
-		options: [
-			{
-				displayName: 'Skin',
-				name: 'skin',
-				type: 'options',
-				options: [
-					{ name: 'Dark', value: 'dark' },
-					{ name: 'Light', value: 'light' },
-				],
-				default: 'dark',
-				description: 'Player theme',
-			},
-			{
-				displayName: 'Base Color',
-				name: 'baseColor',
-				type: 'color',
-				default: '',
-				description: 'Player base (background) color, as a hex value',
-			},
-			{
-				displayName: 'Accent Color',
-				name: 'accentColor',
-				type: 'color',
-				default: '',
-				description: 'Player accent (highlight) color, as a hex value',
-			},
-			{
-				displayName: 'Text Color',
-				name: 'textColor',
-				type: 'color',
-				default: '',
-				description: 'Player text color, as a hex value',
-			},
-			{
-				displayName: 'Font Face',
-				name: 'fontFace',
-				type: 'string',
-				default: '',
-				description: 'The font applied to player text elements (titles, descriptions, recommendations, time counter). Accepts a Google Font name.',
-			},
-		],
+		options: APPEARANCE_OPTIONS,
 	},
 
 	// ── Player Features (niche UI toggles) ───────────────────────────────────────

@@ -2,12 +2,14 @@ import {
 	IAuthenticateGeneric,
 	ICredentialTestRequest,
 	ICredentialType,
+	Icon,
 	INodeProperties,
 } from 'n8n-workflow';
 
 export class CloudinaryApi implements ICredentialType {
 	name = 'cloudinaryApi';
 	displayName = 'Cloudinary API';
+	icon: Icon = { light: 'file:cloudinary.svg', dark: 'file:cloudinary.dark.svg' };
 	documentationUrl = 'https://cloudinary.com/documentation/developer_onboarding_faq_find_credentials';
 	properties: INodeProperties[] = [
 		{

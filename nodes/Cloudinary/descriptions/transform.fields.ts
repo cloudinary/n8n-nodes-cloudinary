@@ -1,4 +1,18 @@
-import { INodeProperties } from 'n8n-workflow';
+import { INodeProperties, INodePropertyOptions } from 'n8n-workflow';
+
+// Ordered by how aggressively each mode changes the image (never-upscale →
+// may-enlarge → pad family → exact), not alphabetically, so the dropdown reads
+// as a gradient with the safe default (Limit) first and the pad modes grouped.
+// Kept as a named const: the alphabetize lint rule only inspects inline array
+// literals. The Multi-Step Fit field derives from this same list to stay in sync.
+const FIT_OPTIONS: INodePropertyOptions[] = [
+	{ name: 'Limit (Never Upscale)', value: 'limit', description: 'Resize down to fit within the dimensions; never enlarges' },
+	{ name: 'Fit (Fit Within)', value: 'fit', description: 'Fit within the dimensions, may enlarge, keeps full image' },
+	{ name: 'Pad (Letterbox)', value: 'pad', description: 'Fit within the dimensions, then pad to fill the rest; keeps full image' },
+	{ name: 'Pad - Limit (Never Upscale)', value: 'lpad', description: 'Like Pad, but never enlarges past the original size' },
+	{ name: 'Pad - Minimum', value: 'mpad', description: 'Like Pad, but only pads when the target is larger than the original; never scales the image' },
+	{ name: 'Scale (Exact)', value: 'scale', description: 'Force exact dimensions; may distort if both are set' },
+];
 
 // All Transform operations build a Cloudinary *delivery URL* and make no API call
 // (the "third flow" — see CLAUDE.md). Fields are gated by resource:'transform' plus
@@ -98,11 +112,12 @@ export const transformFields: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		placeholder: 'c_fill,w_800,h_600',
-		// `$json` is the n8n expression variable — correctly lowercase. The
-		// miscased-json rule is a false positive here; its autofix would rewrite it
-		// to `$JSON`, which is undefined in n8n and breaks the example. Keep lowercase.
-		// eslint-disable-next-line n8n-nodes-base/node-param-description-miscased-json
-		description: 'Optional. A transformation to build on, prepended before this operation\'s own transformation so the two compound into one delivery URL. Wire the previous Transform action\'s output here — <code>{{ $json.transformation }}</code> — to chain steps across nodes. Leave empty to start fresh.',
+		// The `$json` example lives in `hint`, not `description`: the miscased-json lint
+		// rule only inspects descriptions and would rewrite the lowercase `$json` variable
+		// to `$JSON`, which is undefined in n8n. Same approach as the base Webhook and
+		// Elasticsearch nodes.
+		hint: 'e.g. {{ $json.transformation }} from a previous Transform step',
+		description: 'Optional. A transformation to build on, prepended before this operation\'s own transformation so the two compound into one delivery URL. Wire the previous Transform action\'s <code>transformation</code> output field here (drag it in from the input panel) to chain steps across nodes. Leave empty to start fresh.',
 		displayOptions: {
 			show: {
 				resource: ['transform'],
@@ -154,18 +169,7 @@ export const transformFields: INodeProperties[] = [
 		displayName: 'Fit',
 		name: 'resizeFit',
 		type: 'options',
-		// Ordered by how aggressively each mode changes the image (never-upscale →
-		// may-enlarge → pad family → exact), not alphabetically, so the dropdown reads
-		// as a gradient with the safe default (Limit) first and the pad modes grouped.
-		// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
-		options: [
-			{ name: 'Limit (Never Upscale)', value: 'limit', description: 'Resize down to fit within the dimensions; never enlarges' },
-			{ name: 'Fit (Fit Within)', value: 'fit', description: 'Fit within the dimensions, may enlarge, keeps full image' },
-			{ name: 'Pad (Letterbox)', value: 'pad', description: 'Fit within the dimensions, then pad to fill the rest; keeps full image' },
-			{ name: 'Pad - Limit (Never Upscale)', value: 'lpad', description: 'Like Pad, but never enlarges past the original size' },
-			{ name: 'Pad - Minimum', value: 'mpad', description: 'Like Pad, but only pads when the target is larger than the original; never scales the image' },
-			{ name: 'Scale (Exact)', value: 'scale', description: 'Force exact dimensions; may distort if both are set' },
-		],
+		options: FIT_OPTIONS,
 		default: 'limit',
 		description: 'How the asset is fitted to the requested dimensions. Pad modes keep the whole asset and fill the surrounding space (set both width and height to define the padded shape). Note: Resize does not auto-optimize — chain "Image: Optimize" / "Video: Optimize" after it, or use "Compose: Combine Transformations", to add f_auto/q_auto.',
 		displayOptions: {
@@ -616,34 +620,9 @@ export const transformFields: INodeProperties[] = [
 						displayName: 'Fit',
 						name: 'fit',
 						type: 'options',
-						// Same intent-ordering as the standalone Resize Fit field above; keep in sync.
-						// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
-						options: [
-							{
-								name: 'Limit (Never Upscale)',
-								value: 'limit',
-							},
-							{
-								name: 'Fit (Fit Within)',
-								value: 'fit',
-							},
-							{
-								name: 'Pad (Letterbox)',
-								value: 'pad',
-							},
-							{
-								name: 'Pad - Limit (Never Upscale)',
-								value: 'lpad',
-							},
-							{
-								name: 'Pad - Minimum',
-								value: 'mpad',
-							},
-							{
-								name: 'Scale (Exact)',
-								value: 'scale',
-							},
-					],
+						// Same list as the standalone Resize Fit field, minus the long
+						// descriptions (this compact in-collection dropdown has no room for them).
+						options: FIT_OPTIONS.map(({ name, value }) => ({ name, value })),
 						default: 'limit',
 						description: 'How the asset is fitted to the requested dimensions. Pad modes keep the whole asset and fill the surrounding space (set both width and height).',
 						displayOptions: {

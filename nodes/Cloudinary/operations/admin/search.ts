@@ -1,4 +1,4 @@
-import { IDataObject, IHttpRequestOptions, NodeOperationError } from 'n8n-workflow';
+import { IDataObject, IHttpRequestOptions, JsonObject, NodeApiError, NodeOperationError } from 'n8n-workflow';
 import { basicAuth, buildSearchExpression, extractCloudinaryError, jsonHeaders } from '../../cloudinary.utils';
 import { CREDENTIAL_TYPE, OperationHandler } from '../types';
 
@@ -82,7 +82,8 @@ export const search: OperationHandler = async (ctx, i, creds) => {
 					itemIndex: i,
 				});
 			}
-			throw error;
+			// Passes an already-wrapped NodeApiError through untouched.
+			throw new NodeApiError(ctx.getNode(), error as JsonObject, { itemIndex: i });
 		}
 
 		const resources = Array.isArray(response.resources)

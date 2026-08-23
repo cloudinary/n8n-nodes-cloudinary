@@ -1,4 +1,4 @@
-import { IDataObject, ApplicationError } from 'n8n-workflow';
+import { IDataObject, INode, NodeOperationError } from 'n8n-workflow';
 import { sha256 } from './sha256.utils';
 import { CloudinaryCredentials } from './operations/types';
 import { version } from '../../package.json';
@@ -190,14 +190,15 @@ const escapeMetadataValue = (value: string): string => value.replace(/([=|"])/g,
  * matching Cloudinary's multi-value field format. Delimiter characters (`=`, `"`,
  * `|`) are backslash-escaped inside every value — scalar and list element alike —
  * so a value containing them can't be misparsed as another field, pair, or list
- * boundary. Throws ApplicationError on invalid JSON input.
+ * boundary. Throws NodeOperationError on invalid JSON input, attributed to the
+ * calling node.
  */
-export const metadataToPipeString = (input: IDataObject | string): string => {
+export const metadataToPipeString = (input: IDataObject | string, node: INode): string => {
 	let metadata: IDataObject;
 	try {
 		metadata = typeof input === 'object' ? input : (JSON.parse(input) as IDataObject);
 	} catch (error) {
-		throw new ApplicationError('Invalid JSON for structured metadata');
+		throw new NodeOperationError(node, 'Invalid JSON for structured metadata');
 	}
 	return Object.keys(metadata)
 		.map((key) => {
