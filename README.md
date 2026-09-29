@@ -18,6 +18,10 @@ On this page, you'll find a list of operations the Cloudinary node supports.
 	* Video: Optimize, Resize, Crop, Trim, Thumbnail
 	* Custom Transformation (raw transformation string)
 	* Compose: Combine Transformations (multi-step, in one node)
+* Generate (AI image generation — requires the [Image Generation add-on](https://console.cloudinary.com/app/marketplace/details/image_generation))
+	* Generate Image From Text
+	* Generate Image From Reference Images
+	* Get Generation Task
 * Widget
 	* Video Player (builds an embed URL + player config)
 
@@ -51,6 +55,22 @@ Real edits usually need several transformations applied in sequence ("first crop
    This field is available on all single-purpose Transform ops. It is intentionally **not** offered on *Custom Transformation* (you already control the entire string there) or *Combine Transformations* (which chains its own steps internally).
 
 **Tip:** *Resize* and *Crop* don't auto-optimize. To also get `f_auto/q_auto`, either add an *Optimize* step in *Combine Transformations*, or chain an *Optimize* node after them via *Continue From Transformation*.
+
+### Generate (AI image generation)
+
+Uses the Cloudinary [Image Generation API](https://cloudinary.com/documentation/image_generation_addon) to create images with AI models. The account needs the [Image Generation add-on](https://console.cloudinary.com/app/marketplace/details/image_generation).
+
+- **Generate Image From Text** — a prompt, plus optional model, size, and output options.
+- **Generate Image From Reference Images** — a prompt plus 1–4 reference images (HTTPS URLs or asset IDs from your media library). Refer to them in the prompt by position: `[1]`, `[2]`, … Used for restyling, on-brand variants, character consistency, virtual try-on, and editing.
+- **Model** — *Default* (Nano Banana 2), *By Family and Tier* (`flux`, `recraft`, `gpt-image`, `nano-banana`, `ideogram` × `standard`/`premium`; stable as models are upgraded), *By Model ID* (pin one exact model), or *Auto* (the service picks one, optimizing for quality, cost, or speed).
+- **Image Size** — an *Aspect Ratio* + resolution tier (portable across models) or *Exact Dimensions* (64–4096 px).
+- **Storage** — generated images are saved to your media library as managed assets by default (optionally under a Public ID or Upload Preset). Choose *Temporary* for a short-lived URL instead (see `expires_at`).
+
+**Output.** With *Simplify* on (the default), the node emits one item per generated image with its storage fields at the top level — `public_id`, `asset_id`, `secure_url`, `resource_type`, `type`, `version` — plus `format`, `width`, `height`, `model`, `seed`, `request_id`, and the add-on quota under `limits`. Those keys match the rest of the node, so you can wire `{{ $json.public_id }}` into a Transform op or `{{ $json.asset_id }}` into an Asset op directly. Turn *Simplify* off to get the raw API response.
+
+**Sync vs. async.** By default the node waits for the image. Turn on *Options → Async* to return immediately with a `task_id` and `status`; then either poll with **Get Generation Task** (e.g. behind a Wait node) or set a *Notification URL* (such as an n8n Webhook trigger) to be called when it completes. A completed task returns the same per-image items as a synchronous generation.
+
+**Errors** carry the API's error code (e.g. `MG_00429`), a hint, and the `request_id` for support. A `429` means the add-on's generation quota is used up; the error shows how much quota remains. Quota is weighted by model — a premium-tier generation can use several units (e.g. 9 for Nano Banana 2 versus 1 for FLUX.2 Klein).
 
 ### Video Player (Widget)
 
