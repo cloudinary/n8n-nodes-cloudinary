@@ -29,7 +29,7 @@ export class Cloudinary implements INodeType {
 		// node is invoked via an AI Agent — see `usableAsTool` below). Keep it concise,
 		// imperative, and capability-focused so agents pick the right operation.
 		// https://docs.n8n.io/advanced-ai/examples/understand-tools/
-		description: 'Upload images and videos, build optimized transformation and delivery URLs, generate video players, and manage, search, tag, and edit metadata in your Cloudinary media library',
+		description: 'Upload images and videos, generate images with AI from text prompts or reference images, build optimized transformation and delivery URLs, generate video players, and manage, search, tag, and edit metadata in your Cloudinary media library',
 		documentationUrl: 'https://cloudinary.com/documentation/n8n_integration',
 		usableAsTool: true,
 		defaults: {
