@@ -216,7 +216,7 @@ export const readGenerateRequest = (
  * One n8n item per generated asset, with `storage` flattened to the top level so
  * the API-named keys (`public_id`, `asset_id`, `secure_url`, `resource_type`,
  * `type`, `version`) pipe straight into Transform / Asset ops. `extra` carries
- * envelope fields (request_id, limits, task_id, …) onto every item.
+ * envelope fields (request_id, limits, notices, task_id, …) onto every item.
  */
 const flattenAssets = (assets: GeneratedAsset[], extra: IDataObject): IDataObject[] =>
 	assets.map(({ storage, ...media }) => ({
@@ -242,7 +242,13 @@ export const shapeGenerationOutput = (
 
 	if (isTaskResponse(response)) {
 		const { task_id, status, result, limits } = response.data!;
-		const envelope = withDefined({ task_id, status, limits, request_id: response.request_id });
+		const envelope = withDefined({
+			task_id,
+			status,
+			limits,
+			notices: response.notices,
+			request_id: response.request_id,
+		});
 		if (status === 'completed' && result?.assets?.length) {
 			return flattenAssets(result.assets, envelope);
 		}
@@ -250,6 +256,10 @@ export const shapeGenerationOutput = (
 	}
 
 	const assets = response.data?.assets ?? [];
-	const envelope = withDefined({ limits: response.limits, request_id: response.request_id });
+	const envelope = withDefined({
+		limits: response.limits,
+		notices: response.notices,
+		request_id: response.request_id,
+	});
 	return assets.length ? flattenAssets(assets, envelope) : [envelope];
 };

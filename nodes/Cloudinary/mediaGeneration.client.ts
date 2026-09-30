@@ -201,7 +201,10 @@ export interface TemporaryStorage {
 /** `Storage` — mirrors the request `target`. */
 export type Storage = ManagedAssetStorage | TemporaryStorage;
 
-/** `Model` — the model that produced a result. `family`/`tier` may be `unmapped`. */
+/**
+ * `Model` — the model that produced a result. `family`/`tier` are `none` for a model
+ * outside the family/tier taxonomy (not enums: treat any value as possible); key on `id`.
+ */
 export interface Model {
 	family: string;
 	tier: string;
@@ -234,10 +237,30 @@ export interface Limits {
 	addons_quota?: AddonQuota[];
 }
 
+// ── Notices (`Notices`, `x-experimental`) ──
+
+/** `Notice.severity` */
+export const NOTICE_SEVERITIES = ['info', 'warning', 'blocking'] as const;
+export type NoticeSeverity = (typeof NOTICE_SEVERITIES)[number];
+
+/**
+ * `Notice` — plain-text guidance on a response envelope (quota alerts, adjustments
+ * made to fit the model, …). `blocking` means the request was not served and the
+ * text says what unblocks it. The wording may change between releases, so show or
+ * follow `text` as-is — never match on it.
+ */
+export interface Notice {
+	severity: NoticeSeverity;
+	text: string;
+}
+/** `Notices` — root-level on every envelope; omitted when there is nothing to say. */
+export type Notices = Notice[];
+
 /** `GenerateImageResult` — the 200 (synchronous) generation response. */
 export interface GenerateImageResult {
 	data?: GeneratedAssets;
 	limits?: Limits;
+	notices?: Notices;
 	request_id: string;
 }
 
@@ -256,6 +279,7 @@ export interface Task {
 /** `TaskResponse` — the 202 (async accepted) response and the `GET /tasks/{task_id}` body. */
 export interface TaskResponse {
 	data?: Task;
+	notices?: Notices;
 	request_id: string;
 }
 
@@ -274,6 +298,7 @@ export interface MediaGenerationErrorResponse {
 		details?: Record<string, unknown>;
 	};
 	limits?: Limits;
+	notices?: Notices;
 	request_id?: string;
 }
 
@@ -400,6 +425,13 @@ const hintFor = (
 	}
 };
 
+/** Notices joined into one line, each tagged with its severity. */
+export const noticesText = (notices: Notices | undefined): string =>
+	(notices ?? [])
+		.filter((n) => n?.text)
+		.map((n) => `[${n.severity}] ${n.text}`)
+		.join(' ');
+
 const toNodeApiError = (ctx: IExecuteFunctions, i: number, error: unknown): NodeApiError => {
 	const { status, body } = extractMediaGenerationError(error);
 	const apiError = body?.error;
@@ -408,8 +440,11 @@ const toNodeApiError = (ctx: IExecuteFunctions, i: number, error: unknown): Node
 		return new NodeApiError(ctx.getNode(), error as JsonObject, { itemIndex: i });
 	}
 	const message = apiError.code ? `${apiError.code}: ${apiError.message}` : apiError.message;
+	// The service's own notices are more specific than our per-status hint (a quota-wall
+	// notice says *not* to retry, where the generic 429 hint says to), so they replace it.
+	const notices = noticesText(body?.notices);
 	const description = [
-		hintFor(status, body),
+		notices || hintFor(status, body),
 		apiError.details ? `Details: ${JSON.stringify(apiError.details)}` : '',
 		body?.request_id ? `Request ID: ${body.request_id}` : '',
 	]

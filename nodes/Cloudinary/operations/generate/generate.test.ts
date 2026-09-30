@@ -11,6 +11,7 @@ import {
 	target,
 } from './shared';
 import { Cloudinary } from '../../Cloudinary.node';
+import { noticesText } from '../../mediaGeneration.client';
 import { makeCtx, lastRequest, testCreds } from '../testHelpers';
 
 const TASK_ID = '053f4bde4b933c8ecef23724ecde63b6';
@@ -43,6 +44,16 @@ const MANAGED_ASSET_RESULT = {
 		addons_quota: [{ type: 'image_generation', used_by_request: 1, remaining: 48, limit: 50 }],
 	},
 	request_id: '17c3b70c5096df0e77e838323abb7029',
+};
+
+// `Notices` examples from the IMG-8069 announcement.
+const LOW_CREDITS_NOTICE = {
+	severity: 'warning',
+	text: "You've used 40 of your 50 Image Generation credits. 10 remain.",
+};
+const CREDITS_USED_UP_NOTICE = {
+	severity: 'blocking',
+	text: 'Your Image Generation credits are used up (50 of 50). Do not retry before adding credits.',
 };
 
 const ACCEPTED_TASK = {
@@ -172,6 +183,25 @@ describe('generate:textToImage', () => {
 		expect(out[0]).not.toHaveProperty('storage');
 	});
 
+	it('carries root-level notices onto every generated item', async () => {
+		const { ctx, http } = makeCtx({ params: { prompt: 'x' } });
+		http.mockResolvedValue({ ...MANAGED_ASSET_RESULT, notices: [LOW_CREDITS_NOTICE] });
+
+		const [item] = await textToImage(ctx, 0, testCreds);
+
+		expect(item.notices).toEqual([LOW_CREDITS_NOTICE]);
+		expect(item.public_id).toBe('my-public-id');
+	});
+
+	it('omits notices from the output when the response has none', async () => {
+		const { ctx, http } = makeCtx({ params: { prompt: 'x' } });
+		http.mockResolvedValue(MANAGED_ASSET_RESULT);
+
+		const [item] = await textToImage(ctx, 0, testCreds);
+
+		expect(item).not.toHaveProperty('notices');
+	});
+
 	it('returns the task fields for an async (202) response', async () => {
 		const { ctx, http } = makeCtx({ params: { prompt: 'x', generateOptions: { async: true } } });
 		http.mockResolvedValue(ACCEPTED_TASK);
@@ -234,6 +264,24 @@ describe('generate:textToImage', () => {
 			expect(err.description).toContain('0 of 50 quota units remaining');
 			expect(err.description).toContain('Request ID: req-429');
 			expect(err.httpCode).toBe('429');
+		});
+
+		it('shows the notices instead of the generic retry hint on the quota wall', async () => {
+			const { ctx, http } = makeCtx({ params: { prompt: 'x' } });
+			const httpError = Object.assign(new Error('Request failed with status code 429'), {
+				response: {
+					status: 429,
+					data: { ...rateLimitedBody, notices: [CREDITS_USED_UP_NOTICE] },
+				},
+			});
+			http.mockRejectedValue(new NodeApiError(ctx.getNode(), httpError as never));
+
+			const err = await textToImage(ctx, 0, testCreds).catch((e) => e);
+
+			expect(err.message).toBe('MG_00429: Daily generation limit exceeded');
+			expect(err.description).toContain(`[blocking] ${CREDITS_USED_UP_NOTICE.text}`);
+			expect(err.description).not.toContain('Retry later');
+			expect(err.description).toContain('Request ID: req-429');
 		});
 
 		it('handles a plain error carrying the body under response.body', async () => {
@@ -336,6 +384,29 @@ describe('generate:getTask', () => {
 		]);
 	});
 
+	it('carries notices from the task envelope onto the task item', async () => {
+		const { ctx, http } = makeCtx({ params: { task_id: TASK_ID } });
+		http.mockResolvedValue({ ...ACCEPTED_TASK, notices: [LOW_CREDITS_NOTICE] });
+
+		expect(await getTask(ctx, 0, testCreds)).toEqual([
+			{
+				task_id: TASK_ID,
+				status: 'pending',
+				notices: [LOW_CREDITS_NOTICE],
+				request_id: ACCEPTED_TASK.request_id,
+			},
+		]);
+	});
+
+	it('carries notices onto each asset of a completed task', async () => {
+		const { ctx, http } = makeCtx({ params: { task_id: TASK_ID } });
+		http.mockResolvedValue({ ...COMPLETED_TASK, notices: [LOW_CREDITS_NOTICE] });
+
+		const [item] = await getTask(ctx, 0, testCreds);
+
+		expect(item).toMatchObject({ status: 'completed', notices: [LOW_CREDITS_NOTICE] });
+	});
+
 	it('rejects a malformed task ID without calling the API', async () => {
 		const { ctx, http } = makeCtx({ params: { task_id: '../resources/image' } });
 
@@ -395,6 +466,20 @@ describe('request builders', () => {
 				true,
 			),
 		).toEqual([{ task_id: TASK_ID, status: 'failed', request_id: 'r' }]);
+	});
+});
+
+describe('noticesText', () => {
+	it('joins notices with their severity and skips empty entries', () => {
+		expect(noticesText(undefined)).toBe('');
+		expect(noticesText([])).toBe('');
+		expect(
+			noticesText([
+				{ severity: 'info', text: 'Stored as png.' },
+				{ severity: 'warning', text: '' },
+				{ severity: 'blocking', text: 'Credits used up.' },
+			]),
+		).toBe('[info] Stored as png. [blocking] Credits used up.');
 	});
 });
 
