@@ -1,6 +1,7 @@
-import { IDataObject, NodeOperationError } from 'n8n-workflow';
+import { IDataObject } from 'n8n-workflow';
 import { generateImageFromImages } from '../../mediaGeneration.client';
 import { OperationHandler } from '../types';
+import { buildComponents } from '../transform/shared';
 import { readGenerateRequest, referenceImages, shapeGenerationOutput } from './shared';
 
 /**
@@ -14,12 +15,7 @@ export const imageToImage: OperationHandler = async (ctx, i, creds) => {
 	const collection = ctx.getNodeParameter('reference_images', i, {}) as IDataObject;
 	const rows = (collection.reference_image as IDataObject[] | undefined) ?? [];
 
-	let references;
-	try {
-		references = referenceImages(rows);
-	} catch (error) {
-		throw new NodeOperationError(ctx.getNode(), (error as Error).message, { itemIndex: i });
-	}
+	const references = buildComponents(ctx, i, () => referenceImages(rows));
 
 	const response = await generateImageFromImages(ctx, i, creds, {
 		...body,

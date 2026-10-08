@@ -194,6 +194,8 @@ export const generateFields: INodeProperties[] = [
 			},
 		],
 		default: 'default',
+		description:
+			'Credit use varies by model and resolution. Each result reports credits used and remaining under <code>limits</code>. Manage your plan on the <a href="https://console.cloudinary.com/app/marketplace/details/image_generation">Image Generation add-on page</a>.',
 		displayOptions: showFor(GENERATE_OPS),
 	},
 	{
@@ -209,10 +211,21 @@ export const generateFields: INodeProperties[] = [
 		name: 'modelTier',
 		type: 'options',
 		options: [
-			{ name: 'Standard', value: 'standard' },
-			{ name: 'Premium', value: 'premium' },
+			{
+				name: 'Standard',
+				value: 'standard',
+				description: "The family's faster, lower-cost model (e.g. FLUX.2 Klein 9B for flux)",
+			},
+			{
+				name: 'Premium',
+				value: 'premium',
+				description:
+					"The family's highest-quality model (e.g. FLUX.2 Pro for flux); typically uses more credits",
+			},
 		],
 		default: 'standard',
+		description:
+			'Quality tier within the family. The service maps each tier to a current model, so the choice stays valid as models are upgraded.',
 		displayOptions: showFor(GENERATE_OPS, { modelSelection: ['family'] }),
 	},
 	{

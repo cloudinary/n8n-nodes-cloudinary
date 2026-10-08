@@ -375,26 +375,16 @@ const request = async <T>(
 // ── Errors ──
 
 /**
- * Read the spec's `ErrorResponse` body off an n8n HTTP error. `httpRequestWithAuthentication`
- * throws a NodeApiError, which keeps the HTTP response body (`response.data`) as
- * `context.data` and the status as `httpCode`; a raw HTTP error carries it on `response`.
+ * Read the spec's `ErrorResponse` body off the NodeApiError `httpRequestWithAuthentication`
+ * throws: it keeps an object HTTP response body as `context.data` and the status as `httpCode`.
  */
 export const extractMediaGenerationError = (
 	error: any,
 ): { status: number | undefined; body: MediaGenerationErrorResponse | undefined } => {
-	const status =
-		Number(error?.httpCode ?? error?.statusCode ?? error?.response?.status) || undefined;
-	const raw = error?.response?.body ?? error?.response?.data ?? error?.context?.data;
-	let body: MediaGenerationErrorResponse | undefined;
-	if (typeof raw === 'string') {
-		try {
-			body = JSON.parse(raw) as MediaGenerationErrorResponse;
-		} catch {
-			body = undefined;
-		}
-	} else if (raw && typeof raw === 'object') {
-		body = raw as MediaGenerationErrorResponse;
-	}
+	const status = Number(error?.httpCode) || undefined;
+	const data = error?.context?.data;
+	const body =
+		data && typeof data === 'object' ? (data as MediaGenerationErrorResponse) : undefined;
 	return { status, body };
 };
 
@@ -435,11 +425,18 @@ export const noticesText = (notices: Notices | undefined): string =>
 const toNodeApiError = (ctx: IExecuteFunctions, i: number, error: unknown): NodeApiError => {
 	const { status, body } = extractMediaGenerationError(error);
 	const apiError = body?.error;
+	// `new NodeApiError(node, err)` returns `err` untouched when it already is one (which
+	// is what httpRequestWithAuthentication throws), dropping any options passed — so
+	// set the item index and rewrite an existing NodeApiError in place.
+	const nodeError =
+		error instanceof NodeApiError
+			? error
+			: new NodeApiError(ctx.getNode(), error as JsonObject, { itemIndex: i });
+	nodeError.context.itemIndex = i;
 	if (!apiError?.message) {
-		// Not a spec-shaped error body (network failure, proxy page, …) — keep n8n's own.
-		return new NodeApiError(ctx.getNode(), error as JsonObject, { itemIndex: i });
+		// Not a spec-shaped error body (network failure, plain-text 429, proxy page, …) — keep n8n's own.
+		return nodeError;
 	}
-	const message = apiError.code ? `${apiError.code}: ${apiError.message}` : apiError.message;
 	// The service's own notices are more specific than our per-status hint (a quota-wall
 	// notice says *not* to retry, where the generic 429 hint says to), so they replace it.
 	const notices = noticesText(body?.notices);
@@ -450,19 +447,7 @@ const toNodeApiError = (ctx: IExecuteFunctions, i: number, error: unknown): Node
 	]
 		.filter(Boolean)
 		.join(' ');
-	// `new NodeApiError(node, err)` returns `err` untouched when it already is one (which
-	// is what httpRequestWithAuthentication throws), dropping any options passed — so
-	// rewrite an existing NodeApiError in place and only construct for other errors.
-	if (error instanceof NodeApiError) {
-		error.message = message;
-		error.description = description || null;
-		if (status) error.httpCode = String(status);
-		return error;
-	}
-	return new NodeApiError(ctx.getNode(), error as JsonObject, {
-		message,
-		description: description || undefined,
-		httpCode: status ? String(status) : undefined,
-		itemIndex: i,
-	});
+	nodeError.message = apiError.code ? `${apiError.code}: ${apiError.message}` : apiError.message;
+	nodeError.description = description || null;
+	return nodeError;
 };

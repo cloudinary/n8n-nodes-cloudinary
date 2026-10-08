@@ -1,4 +1,5 @@
 import { IDataObject, IExecuteFunctions, NodeOperationError } from 'n8n-workflow';
+import { buildComponents } from '../transform/shared';
 import {
 	GenerateImageRequest,
 	GenerateImageResult,
@@ -19,7 +20,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // Request builders — map the flat n8n fields onto the spec's nested request
 // objects. Pure (params → request fragment) and throw a plain Error on invalid
-// input; `readGenerateRequest` turns that into the NodeOperationError handlers
+// input; `buildComponents` turns that into the NodeOperationError handlers
 // throw. Same split as the Transform component builders.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -136,18 +137,6 @@ export const referenceImages = (rows: IDataObject[]): ReferenceImage[] => {
 };
 
 /**
- * Run a builder, converting its plain validation Error into a NodeOperationError
- * attributed to the item.
- */
-const build = <T>(ctx: IExecuteFunctions, i: number, fn: () => T): T => {
-	try {
-		return fn();
-	} catch (error) {
-		throw new NodeOperationError(ctx.getNode(), (error as Error).message, { itemIndex: i });
-	}
-};
-
-/**
  * Read every field shared by the two generation operations into a
  * `GenerateImageRequest`. Only fields the user set are emitted, so the service's
  * documented defaults apply to the rest.
@@ -165,7 +154,7 @@ export const readGenerateRequest = (
 
 	const body: GenerateImageRequest = { prompt };
 
-	const model = build(ctx, i, () =>
+	const model = buildComponents(ctx, i, () =>
 		modelSelection({
 			mode: ctx.getNodeParameter('modelSelection', i, 'default') as string,
 			family: ctx.getNodeParameter('modelFamily', i, '') as string,
@@ -176,7 +165,7 @@ export const readGenerateRequest = (
 	);
 	if (model) body.model = model;
 
-	const size = build(ctx, i, () =>
+	const size = buildComponents(ctx, i, () =>
 		imageSize({
 			mode: ctx.getNodeParameter('imageSize', i, 'default') as string,
 			aspectRatio: ctx.getNodeParameter('imageSizeAspectRatio', i, '') as string,
@@ -187,7 +176,7 @@ export const readGenerateRequest = (
 	);
 	if (size) body.image_size = size;
 
-	const storageTarget = build(ctx, i, () =>
+	const storageTarget = buildComponents(ctx, i, () =>
 		target({
 			targetType: options.target_type as string | undefined,
 			publicId: options.public_id as string | undefined,

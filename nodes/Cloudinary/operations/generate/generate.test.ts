@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { NodeApiError, type IDataObject } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError, type IDataObject } from 'n8n-workflow';
 import { textToImage } from './textToImage';
 import { imageToImage } from './imageToImage';
 import { getTask } from './getTask';
@@ -284,23 +284,32 @@ describe('generate:textToImage', () => {
 			expect(err.description).toContain('Request ID: req-429');
 		});
 
-		it('handles a plain error carrying the body under response.body', async () => {
+		it('attributes the error to the failing item', async () => {
 			const { ctx, http } = makeCtx({ params: { prompt: 'x' } });
-			http.mockRejectedValue({
-				httpCode: 403,
-				response: {
-					body: {
-						error: { category: 'auth_error', code: 'MG_00403', message: 'Add-on not enabled' },
-						request_id: 'req-403',
-					},
-				},
+			const httpError = Object.assign(new Error('Request failed with status code 429'), {
+				response: { status: 429, data: rateLimitedBody },
 			});
+			http.mockRejectedValue(new NodeApiError(ctx.getNode(), httpError as never));
 
-			const err = await textToImage(ctx, 0, testCreds).catch((e) => e);
+			const err = await textToImage(ctx, 3, testCreds).catch((e) => e);
 
-			expect(err).toBeInstanceOf(NodeApiError);
-			expect(err.message).toBe('MG_00403: Add-on not enabled');
-			expect(err.description).toContain('Image Generation add-on');
+			expect(err.context.itemIndex).toBe(3);
+		});
+
+		it("keeps n8n's own error for a non-spec body, still attributed to the item", async () => {
+			const { ctx, http } = makeCtx({ params: { prompt: 'x' } });
+			const httpError = Object.assign(new Error('Request failed with status code 429'), {
+				response: { status: 429, data: 'Too Many Requests' },
+			});
+			const original = new NodeApiError(ctx.getNode(), httpError as never);
+			const originalMessage = original.message;
+			http.mockRejectedValue(original);
+
+			const err = await textToImage(ctx, 2, testCreds).catch((e) => e);
+
+			expect(err).toBe(original);
+			expect(err.message).toBe(originalMessage);
+			expect(err.context.itemIndex).toBe(2);
 		});
 	});
 });
@@ -405,6 +414,23 @@ describe('generate:getTask', () => {
 		const [item] = await getTask(ctx, 0, testCreds);
 
 		expect(item).toMatchObject({ status: 'completed', notices: [LOW_CREDITS_NOTICE] });
+	});
+
+	it('throws on a failed task so Continue On Fail and the error output apply', async () => {
+		const { ctx, http } = makeCtx({ params: { task_id: TASK_ID } });
+		http.mockResolvedValue({
+			data: { task_id: TASK_ID, status: 'failed' },
+			notices: [LOW_CREDITS_NOTICE],
+			request_id: 'req-failed',
+		});
+
+		const err = await getTask(ctx, 1, testCreds).catch((e) => e);
+
+		expect(err).toBeInstanceOf(NodeOperationError);
+		expect(err.message).toBe(`Generation task ${TASK_ID} failed`);
+		expect(err.description).toContain(`[warning] ${LOW_CREDITS_NOTICE.text}`);
+		expect(err.description).toContain('Request ID: req-failed');
+		expect(err.context.itemIndex).toBe(1);
 	});
 
 	it('rejects a malformed task ID without calling the API', async () => {

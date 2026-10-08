@@ -69,7 +69,7 @@ node docs/backward-compatibility-check/local-n8n/show-last-execution.cjs
 
 ### `generate-smoke.workflow.json`
 
-About 6 add-on quota units per run with the FLUX standard models it pins. It leaves one image under `n8n-smoke/` in the media library; everything else uses temporary storage.
+Uses add-on credits on each run (it pins the low-cost FLUX standard models; check `limits` in the output for the actual amount). It leaves one image under `n8n-smoke/` in the media library; everything else uses temporary storage.
 
 | Node | Proves | Expect |
 |---|---|---|
