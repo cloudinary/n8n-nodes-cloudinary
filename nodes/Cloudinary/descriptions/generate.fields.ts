@@ -234,6 +234,8 @@ export const generateFields: INodeProperties[] = [
 		type: 'options',
 		options: modelIdOptions(TEXT_TO_IMAGE_MODEL_IDS),
 		default: 'nano-banana-2',
+		description:
+			'Model not listed? Switch this field to Expression and enter its ID; the service validates it',
 		displayOptions: showFor(['textToImage'], { modelSelection: ['id'] }),
 	},
 	{
@@ -242,7 +244,8 @@ export const generateFields: INodeProperties[] = [
 		type: 'options',
 		options: modelIdOptions(IMAGE_TO_IMAGE_MODEL_IDS),
 		default: 'nano-banana-2-edit',
-		description: 'Only edit models accept reference images',
+		description:
+			'Only edit models accept reference images. Model not listed? Switch this field to Expression and enter its ID; the service validates it.',
 		displayOptions: showFor(['imageToImage'], { modelSelection: ['id'] }),
 	},
 	{

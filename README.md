@@ -62,7 +62,7 @@ Uses the Cloudinary [Image Generation API](https://cloudinary.com/documentation/
 
 - **Generate Image From Text** — a prompt, plus optional model, size, and output options.
 - **Generate Image From Reference Images** — a prompt plus 1–4 reference images (HTTPS URLs or asset IDs from your media library). Refer to them in the prompt by position: `[1]`, `[2]`, … Used for restyling, on-brand variants, character consistency, virtual try-on, and editing.
-- **Model** — *Default* (Nano Banana 2), *By Family and Tier* (`flux`, `recraft`, `gpt-image`, `nano-banana`, `ideogram` × `standard`/`premium` — standard is the family's faster, lower-cost model, premium its highest-quality one; stable as models are upgraded), *By Model ID* (pin one exact model), or *Auto* (the service picks one, optimizing for quality, cost, or speed).
+- **Model** — *Default* (Nano Banana 2), *By Family and Tier* (`flux`, `recraft`, `gpt-image`, `nano-banana`, `ideogram` × `standard`/`premium` — standard is the family's faster, lower-cost model, premium its highest-quality one; stable as models are upgraded), *By Model ID* (pin one exact model; for a model not yet in the list, switch the field to Expression and enter its ID), or *Auto* (the service picks one, optimizing for quality, cost, or speed).
 - **Image Size** — an *Aspect Ratio* + resolution tier (portable across models) or *Exact Dimensions* (64–4096 px).
 - **Storage** — generated images are saved to your media library as managed assets by default (optionally under a Public ID or Upload Preset). Choose *Temporary* for a short-lived URL instead (see `expires_at`).
 
