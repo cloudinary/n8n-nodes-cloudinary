@@ -3,7 +3,7 @@
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": ["Data & Storage", "Marketing & Content"],
-	"alias": ["video", "image", "media", "transform", "transcode", "optimize", "resize", "crop", "thumbnail", "upload", "CDN", "asset", "DAM"],
+	"alias": ["video", "image", "media", "transform", "transcode", "optimize", "resize", "crop", "thumbnail", "upload", "CDN", "asset", "DAM", "AI", "generate", "image generation", "text to image", "image to image", "generative AI"],
 	"resources": {
 		"credentialDocumentation": [
 			{

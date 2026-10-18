@@ -16,6 +16,11 @@ const RESOURCE_OPTIONS: INodePropertyOptions[] = [
 		description: 'Build delivery and transformation URLs for images and videos (no upload, no API call)',
 	},
 	{
+		name: 'Generate',
+		value: 'generate',
+		description: 'Generate images with AI from a text prompt or reference images (requires the Image Generation add-on)',
+	},
+	{
 		name: 'Asset',
 		value: 'asset',
 		description: 'Work with existing assets by asset ID: get, search, delete, update tags/metadata',
@@ -159,6 +164,38 @@ export const resourceProperties: INodeProperties[] = [
 		},
 		options: TRANSFORM_OPERATION_OPTIONS,
 		default: 'optimizeImage',
+	},
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['generate'],
+			},
+		},
+		options: [
+			{
+				name: 'Generate Image From Reference Images',
+				value: 'imageToImage',
+				description: 'Generate an image guided by up to 4 reference images and a prompt (restyle, variants, try-on, edit). Outputs the stored image\'s public_id, asset_id, and secure_url.',
+				action: 'Generate an image from reference images',
+			},
+			{
+				name: 'Generate Image From Text',
+				value: 'textToImage',
+				description: 'Generate an image from a text prompt using an AI model. Outputs the stored image\'s public_id, asset_id, and secure_url.',
+				action: 'Generate an image from text',
+			},
+			{
+				name: 'Get Generation Task',
+				value: 'getTask',
+				description: 'Get the status of an async generation task, and its image(s) once completed',
+				action: 'Get a generation task',
+			},
+		],
+		default: 'textToImage',
 	},
 	{
 		displayName: 'Operation',

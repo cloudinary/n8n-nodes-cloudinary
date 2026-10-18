@@ -226,17 +226,17 @@ export const convertComponents = (format: string): string[] => {
 };
 
 /**
- * Run a component builder, converting its plain validation Error into the
- * NodeOperationError the handlers throw (with `itemIndex`, and an optional prefix
- * such as `Step 2: ` for Multi-Step). Keeps validation logic in the builders while
- * preserving the node-aware errors callers expect.
+ * Run a builder, converting its plain validation Error into the NodeOperationError
+ * the handlers throw (with `itemIndex`, and an optional prefix such as `Step 2: ` for
+ * Multi-Step). Keeps validation logic in the builders while preserving the node-aware
+ * errors callers expect. Generic so the Generate request builders share it.
  */
-export const buildComponents = (
+export const buildComponents = <T = string[]>(
 	ctx: IExecuteFunctions,
 	i: number,
-	build: () => string[],
+	build: () => T,
 	prefix = '',
-): string[] => {
+): T => {
 	try {
 		return build();
 	} catch (error) {

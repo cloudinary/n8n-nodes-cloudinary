@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-cloudinary",
-  "version": "0.2.3",
-  "description": "The official Cloudinary n8n node - upload media, update asset tags and metadata, and more",
+  "version": "0.3.0",
+  "description": "The official Cloudinary n8n node - upload media, generate images with AI, update asset tags and metadata, and more",
   "keywords": [
     "n8n-community-node-package",
     "cloudinary",
@@ -9,7 +9,9 @@
     "media-management",
     "tags",
     "metadata",
-    "cloud-storage"
+    "cloud-storage",
+    "image-generation",
+    "ai"
   ],
   "license": "MIT",
   "homepage": "https://cloudinary.com/documentation",

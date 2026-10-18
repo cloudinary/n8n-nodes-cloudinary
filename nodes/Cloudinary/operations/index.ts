@@ -20,6 +20,9 @@ import { videoThumbnail } from './transform/videoThumbnail';
 import { customTransformation } from './transform/customTransformation';
 import { multiStep } from './transform/multiStep';
 import { videoPlayer } from './widget/videoPlayer';
+import { textToImage } from './generate/textToImage';
+import { imageToImage } from './generate/imageToImage';
+import { getTask } from './generate/getTask';
 
 /**
  * Maps `${resource}:${operation}` to its handler. Add a new operation by
@@ -49,4 +52,7 @@ export const operationHandlers: Record<string, OperationHandler> = {
 	'transform:customTransformation': customTransformation,
 	'transform:combineTransformations': multiStep,
 	'widget:videoPlayer': videoPlayer,
+	'generate:textToImage': textToImage,
+	'generate:imageToImage': imageToImage,
+	'generate:getTask': getTask,
 };
